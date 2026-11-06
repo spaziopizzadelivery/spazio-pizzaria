@@ -189,7 +189,7 @@ async function loadCatalog(){
   PRODUCTS=[];
  }
  if(bordersResult.status==='fulfilled'){
-  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...bordersResult.value.map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
+  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...bordersResult.value.filter(b=>!(Number(b.price)===0&&/tradicional|sem borda/i.test(b.name))).map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
  }else{
   console.error('Falha ao carregar bordas:',bordersResult.reason);
   CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];
