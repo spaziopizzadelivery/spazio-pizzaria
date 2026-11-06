@@ -151,7 +151,7 @@ $('#headerCart').addEventListener('click',showCart);$('#barCart').addEventListen
 const SUPABASE_URL='https://uqsgrsggvlwjceawmlbv.supabase.co';
 const SUPABASE_KEY='sb_publishable_9Ugvf23EysBC3sQ27s40cQ_YppnjdkP';
 async function dbGet(table,query=''){
- const response=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?'+query,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+ const response=await fetch(SUPABASE_URL+'/rest/v1/'+table+'?'+query,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},signal:AbortSignal.timeout(12000)});
  if(!response.ok)throw new Error('Erro ao consultar '+table+' ('+response.status+')');
  return response.json();
 }
@@ -175,7 +175,7 @@ async function loadCatalog(){
   PRODUCTS=products.map(p=>({...p,price:Number(p.price)}));
   CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...borders.map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
   applySettings(settings);renderCatalog();updateCart();
- }catch(err){console.error(err);PRODUCTS=[];CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];renderCatalog();status.textContent='⚠️ Cardápio temporariamente indisponível. Entre em contato pelo WhatsApp.';}
+ }catch(err){console.error(err);PRODUCTS=[];CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];renderCatalog();status.textContent='⚠️ Não foi possível carregar o cardápio. Clique aqui para tentar novamente.';status.style.cursor='pointer';status.onclick=()=>{status.onclick=null;status.style.cursor='';loadCatalog()};}
 }
 loadCatalog();setInterval(updateStoreStatus,60000);
 
