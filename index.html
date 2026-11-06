@@ -53,6 +53,25 @@ html,body{background:#090909;color:var(--ink)}
 .note{color:#b7ada2!important}
 .status{color:#e8c590}
 
+
+/* Seção institucional */
+.store-info{padding-top:52px;padding-bottom:54px}
+.store-info-heading{text-align:center;max-width:620px;margin:0 auto 26px}
+.store-info-heading h3{font:700 clamp(26px,4vw,36px) Georgia,serif;color:#f5eadb;margin:8px 0}
+.store-info-heading h3 em{color:#e8c590}
+.store-info-heading p{color:#b7ada2;font-size:14px;line-height:1.6}
+.store-info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.store-info-card{background:#171513;border:1px solid #49392d;border-radius:16px;padding:20px;min-height:180px;box-shadow:0 10px 28px #0005}
+.store-info-icon{display:inline-flex;width:36px;height:36px;align-items:center;justify-content:center;border-radius:50%;background:#2b2016;color:#e8c590;font-size:22px;margin-bottom:10px}
+.store-info-card h4{color:#f5eadb;font-size:15px;margin:0 0 10px}
+.store-info-card p{color:#d1c5b9;font-size:13px;line-height:1.65;margin:5px 0}
+.store-info-card strong{color:#e8c590}
+.store-info-card a{color:#e8c590;text-decoration:none}
+.store-info-card a:hover{text-decoration:underline}
+.store-info-muted{color:#a99c90!important}
+@media(max-width:760px){.store-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.store-info-card{padding:16px;min-height:170px}}
+@media(max-width:420px){.store-info-grid{grid-template-columns:1fr}.store-info-card{min-height:0}}
+
 </style>
 </head>
 <body>
@@ -62,6 +81,15 @@ html,body{background:#090909;color:var(--ink)}
 <div class="shell"><div id="openingStatus" class="status" style="color:#675347;padding:10px 0" aria-live="polite"></div></div>
 <nav class="sticky" aria-label="Filtros do cardápio"><div class="shell toolbar"><input id="search" class="search" type="search" placeholder="🔎 Buscar sabor ou ingrediente..." aria-label="Buscar pizza"><div class="pills" id="filters"><button class="pill active" data-category="Todos">Todos</button><button class="pill" data-category="Tradicionais">Tradicionais</button><button class="pill" data-category="Especiais">Especiais</button><button class="pill" data-category="Bebidas">🥤 Bebidas</button><button class="pill" data-category="Promoções" id="promoFilter" hidden>🎁 Promoções</button></div></div></nav>
 <main class="shell content"><div id="promoBanner" class="promo-banner" hidden><strong>🎁 Terça da Borda Grátis!</strong>Hoje, qualquer pizza ganha borda recheada de cortesia: Catupiry, Cheddar, Cream Cheese ou Chocolate. Economia de R$ 15,00 por pizza!</div><div class="section-header"><div><h3 id="sectionTitle">Nosso cardápio</h3><p>Escolha sua pizza e adicione ao carrinho.</p></div><span class="count" id="count"></span></div><div id="catalog" class="cards"></div><div id="empty" class="empty" hidden>Nenhum sabor encontrado. Experimente outra busca.</div></main>
+<section class="store-info shell" id="storeInfo" aria-labelledby="storeInfoTitle">
+  <div class="store-info-heading"><span class="eyebrow">✦ Muito além de uma pizza</span><h3 id="storeInfoTitle">Conheça a <em>Spazio</em></h3><p>Confira nossos horários, formas de receber seu pedido e canais de atendimento.</p></div>
+  <div class="store-info-grid">
+    <article class="store-info-card"><span class="store-info-icon">◷</span><h4>Horário de funcionamento</h4><p><strong>Terça a domingo</strong><br>18h às 23h</p><p class="store-info-muted">Segunda-feira: fechado</p></article>
+    <article class="store-info-card"><span class="store-info-icon">⌖</span><h4>Entrega ou retirada</h4><p><strong>Delivery</strong><br>Taxa fixa de R$ 9,00</p><p class="store-info-muted">Retirada no local sem taxa.</p></article>
+    <article class="store-info-card"><span class="store-info-icon">▣</span><h4>Formas de pagamento</h4><p>Pix, dinheiro e cartões de crédito ou débito.</p></article>
+    <article class="store-info-card"><span class="store-info-icon">✉</span><h4>Fale com a gente</h4><p><a href="https://wa.me/5535988866999" target="_blank" rel="noopener">WhatsApp: (35) 98886-6999</a></p><p><a href="https://instagram.com/spaziopizzasl" target="_blank" rel="noopener">Instagram: @spaziopizzasl</a></p></article>
+  </div>
+</section>
 <footer class="footer"><div class="shell"><div><h4>Spazio Pizza Delivery</h4><p>Sabores especiais para acompanhar seus melhores momentos.</p></div><div><p>WhatsApp: <a href="https://wa.me/5535988866999" target="_blank" rel="noopener">(35) 98886-6999</a></p><p>Instagram: @spaziopizzasl</p><p>Os preços informados são os do cardápio fornecido.</p></div></div><p style="font-size:11px;line-height:1.5;margin-top:12px">Fotos ilustrativas: <a href="https://commons.wikimedia.org/wiki/Category:Coca-Cola" target="_blank" rel="noopener noreferrer">Wikimedia Commons (Coca-Cola)</a>, <a href="https://commons.wikimedia.org/wiki/Category:Guaran%C3%A1_Antarctica" target="_blank" rel="noopener noreferrer">Wikimedia Commons (Guaraná)</a> e <a href="https://refrigerantesmantiqueira.com.br/produtos/" target="_blank" rel="noopener noreferrer">Refrigerantes Mantiqueira</a>. Embalagens podem variar.</p></footer>
 <div id="basketBar" class="basket-bar" hidden><span aria-hidden="true">🛒</span><div class="summary"><b id="basketLabel">0 itens</b><small id="basketValue">R$ 0,00</small></div><button id="barCart" type="button">Ver carrinho →</button></div>
 <div id="overlay" class="overlay" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><h3 id="modalTitle"></h3><button class="close" id="closeModal" aria-label="Fechar" type="button">×</button></div><div id="modalBody" class="modal-body"></div><div id="modalFoot" class="modal-foot"></div></section></div>
