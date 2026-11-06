@@ -165,18 +165,41 @@ function applySettings(rows){const map={};rows.forEach(r=>map[r.key]=unpack(r.va
  v=settingValue(map,['tuesday_promo_enabled','promo_tuesday_enabled']);if(typeof v==='boolean')PROMO_ENABLED=v;
 }
 async function loadCatalog(){
- const status=$('#openingStatus');status.textContent='⏳ Atualizando cardápio...';
- try{
-  const [products,borders,settings]=await Promise.all([
-   dbGet('products','select=id,name,description,category,price,active,sort_order&active=eq.true&order=sort_order.asc,id.asc'),
-   dbGet('borders','select=id,name,price,active&active=eq.true&order=id.asc'),
-   dbGet('store_settings','select=key,value')
-  ]);
-  PRODUCTS=products.map(p=>({...p,price:Number(p.price)}));
-  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...borders.map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
-  applySettings(settings);renderCatalog();updateCart();
- }catch(err){console.error(err);PRODUCTS=[];CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];renderCatalog();status.textContent='⚠️ Não foi possível carregar o cardápio. Clique aqui para tentar novamente.';status.style.cursor='pointer';status.onclick=()=>{status.onclick=null;status.style.cursor='';loadCatalog()};}
+ const status=$('#openingStatus');status.textContent='⏳ Atualizando cardápio...';status.onclick=null;status.style.cursor='';
+ const queries=[
+  dbGet('products','select=id,name,description,category,price,active,sort_order&active=eq.true&order=sort_order.asc,id.asc'),
+  dbGet('borders','select=id,name,price,active&active=eq.true&order=id.asc'),
+  dbGet('store_settings','select=key,value')
+ ];
+ const [productsResult,bordersResult,settingsResult]=await Promise.allSettled(queries);
+ if(productsResult.status==='fulfilled'){
+  PRODUCTS=productsResult.value.map(p=>({...p,price:Number(p.price)}));
+ }else{
+  console.error('Falha ao carregar produtos:',productsResult.reason);
+  PRODUCTS=[];
+ }
+ if(bordersResult.status==='fulfilled'){
+  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...bordersResult.value.map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
+ }else{
+  console.error('Falha ao carregar bordas:',bordersResult.reason);
+  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];
+ }
+ if(settingsResult.status==='fulfilled'){
+  try{applySettings(settingsResult.value)}catch(err){console.error('Falha nas configurações:',err)}
+ }else console.error('Falha ao carregar configurações:',settingsResult.reason);
+ renderCatalog();updateCart();
+ if(productsResult.status==='fulfilled'){
+  if(!PRODUCTS.length){status.textContent='Nenhum produto ativo encontrado no cardápio.';return}
+  if(bordersResult.status==='rejected'||settingsResult.status==='rejected'){
+   status.textContent='⚠️ Cardápio carregado parcialmente. Clique para atualizar as opções.';
+   status.style.cursor='pointer';status.onclick=loadCatalog;
+  }
+ }else{
+  status.textContent='⚠️ Não foi possível carregar os produtos. Clique aqui para tentar novamente.';
+  status.style.cursor='pointer';status.onclick=loadCatalog;
+ }
 }
+
 loadCatalog();setInterval(updateStoreStatus,60000);
 
 </script>
