@@ -14,9 +14,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
-const URL='https://uqsgrsggvlwjceawmlbv.supabase.co';
+const URL = 'https://uqsgrsggvlwjceawmlbv.supabase.co'.trim();
 const KEY='sb_publishable_9Ugvf23EysBC3sQ27s40cQ_YppnjdkP';
-const sb=window.supabase.createClient(URL,KEY);
+const sb = window.supabase.createClient(URL, KEY);
 const $=id=>document.getElementById(id);
 const money=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let products=[],borders=[],settings=[];
