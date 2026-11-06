@@ -73,7 +73,7 @@ function closeModal(){ $('#overlay').hidden=true;document.body.style.overflow=''
 $('#closeModal').addEventListener('click',closeModal);$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeModal();if(e.key==='Tab'&&!$('#overlay').hidden){const focusables=[...$('#overlay').querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled)')].filter(n=>n.offsetParent!==null);if(!focusables.length)return;const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 function labelledRadio(name,value,caption,checked=false){const label=el('label','option'),inp=document.createElement('input');inp.type='radio';inp.name=name;inp.value=value;inp.checked=checked;label.append(inp,document.createTextNode(caption));return label}
 let CRUST_OPTIONS=[
- {id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},
+ {id:'traditional',label:'Massa tradicional',price:0},
  {id:'catupiry',label:'Borda recheada de Catupiry',price:15},
  {id:'cheddar',label:'Borda recheada de Cheddar',price:15},
  {id:'cream-cheese',label:'Borda recheada de Cream Cheese',price:15},
@@ -189,10 +189,10 @@ async function loadCatalog(){
   PRODUCTS=[];
  }
  if(bordersResult.status==='fulfilled'){
-  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0},...bordersResult.value.filter(b=>!(Number(b.price)===0&&/tradicional|sem borda/i.test(b.name))).map(b=>({id:String(b.id),label:b.name,price:Number(b.price)}))];
+  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional',price:0},...bordersResult.value.filter(b=>!(Number(b.price)===0&&/tradicional|sem borda/i.test(b.name))).map(b=>({id:String(b.id),label:'Borda de '+b.name,price:Number(b.price)}))];
  }else{
   console.error('Falha ao carregar bordas:',bordersResult.reason);
-  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional (sem borda recheada)',price:0}];
+  CRUST_OPTIONS=[{id:'traditional',label:'Massa tradicional',price:0}];
  }
  if(settingsResult.status==='fulfilled'){
   try{applySettings(settingsResult.value)}catch(err){console.error('Falha nas configurações:',err)}
