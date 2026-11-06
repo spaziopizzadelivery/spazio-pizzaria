@@ -27,10 +27,10 @@ function requireOk(result){if(result.error)throw result.error;return result.data
 async function checkAdmin(){const {data:{user},error}=await sb.auth.getUser();if(error||!user)return false;const r=await sb.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();if(r.error)throw r.error;return Boolean(r.data);}
 async function enter(){const ok=await checkAdmin();$('login').classList.toggle('hidden',ok);$('app').classList.toggle('hidden',!ok);$('logout').classList.toggle('hidden',!ok);if(ok)await Promise.all([loadOrders(),loadProducts(),loadBorders(),loadSettings()]);else notice('Entre com uma conta autorizada para administrar a loja.');}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();try{notice('Entrando...');requireOk(await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}));$('password').value='';await enter();}catch(err){fail(err)}});
-$('logout').onclick=async()=>{await sb.auth.signOut();$('app').classList.add('hidden');$('login').classList.remove('hidden');$('logout').classList.add('hidden');knownOrderIds=null;soundEnabled=false;document.title='Spazio Pizza | Administração';$('newOrderAlert').classList.add('hidden');notice('Sessão encerrada.');};
+$('logout').onclick=async()=>{await sb.auth.signOut();$('app').classList.add('hidden');$('login').classList.remove('hidden');$('logout').classList.add('hidden');knownOrderIds=null;soundEnabled=false;document.title='Spazio Pizza | Administração';$('newOrderAlert').classList.add('hidden');pendingOrders.clear();stopPendingAlarm();notice('Sessão encerrada.');};
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===btn));['orders','products','borders','settings'].forEach(t=>$(t+'Tab').classList.toggle('hidden',t!==btn.dataset.tab));notice('');});
 let ordersLoading=false;
-let knownOrderIds=null,orderAudioContext=null,soundEnabled=false;
+let knownOrderIds=null,orderAudioContext=null,soundEnabled=false,pendingOrders=new Set(),alarmTimer=null;
 function playOrderSound(){
  if(!soundEnabled||!orderAudioContext)return;
  try{
@@ -56,15 +56,38 @@ $('enableOrderSound').onclick=async()=>{
   soundEnabled=true;
   $('enableOrderSound').textContent='🔔 Som ativado · Testar';
   $('soundStatus').textContent='Som ligado enquanto este painel estiver aberto.';
-  playOrderSound();
+  syncPendingAlarm();
+  if(!pendingOrders.size)playOrderSound();
  }catch(err){fail(err)}
 };
-function notifyNewOrders(newOrders){
+function syncPendingAlarm(){
+ const count=pendingOrders.size;
  const alert=$('newOrderAlert');
- alert.textContent='🔔 '+(newOrders.length===1?'Novo pedido recebido!':'Você recebeu '+newOrders.length+' novos pedidos!')+' Confira os pedidos abaixo.';
- alert.classList.remove('hidden');
- document.title='🔔 '+newOrders.length+' novo(s) pedido(s) | Spazio Pizza';
- playOrderSound();
+ if(count){
+  alert.textContent='🔔 '+count+(count===1?' pedido aguardando aceitação ou rejeição.':' pedidos aguardando aceitação ou rejeição.');
+  alert.classList.remove('hidden');
+  document.title='🔔 '+count+' pendente(s) | Spazio Pizza';
+  if(soundEnabled&&!alarmTimer){
+   playOrderSound();
+   alarmTimer=setInterval(()=>{if(pendingOrders.size&&soundEnabled)playOrderSound();else stopPendingAlarm()},2100);
+  }
+ }else{
+  stopPendingAlarm();
+  alert.classList.add('hidden');
+  document.title='Spazio Pizza | Administração';
+ }
+}
+function stopPendingAlarm(){if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}}
+async function setOrderDecision(order,status){
+ if(!['preparing','cancelled'].includes(status))return;
+ try{
+  const result=requireOk(await sb.from('orders').update({status}).eq('id',order.id).eq('status','received').select('id'));
+  if(!result.length)throw Error('Este pedido já foi atualizado. Atualize a lista.');
+  pendingOrders.delete(order.id);
+  syncPendingAlarm();
+  notice(status==='preparing'?'Pedido aceito e enviado para preparo.':'Pedido rejeitado.','success');
+  await loadOrdersAfterSave();
+ }catch(err){fail(err)}
 }
 
 const orderStatusLabels={received:'Recebido',preparing:'Em preparo',delivering:'Saiu para entrega',completed:'Concluído',cancelled:'Cancelado'};
@@ -73,13 +96,23 @@ function formatOrderTime(value){return new Date(value).toLocaleString('pt-BR',{t
 async function loadOrders(){if(ordersLoading)return;ordersLoading=true;try{const data=requireOk(await sb.from('orders').select('*').order('created_at',{ascending:false}).limit(150));const currentIds=new Set(data.map(order=>order.id));
 if(knownOrderIds!==null){
  const newOrders=data.filter(order=>!knownOrderIds.has(order.id));
- if(newOrders.length)notifyNewOrders(newOrders);
+ if(newOrders.length)notice(newOrders.length===1?'Novo pedido recebido!':'Novos pedidos recebidos!','success');
 }
 knownOrderIds=currentIds;
-const list=$('ordersList');const fragment=document.createDocumentFragment();if(!data.length)fragment.append(document.createTextNode('Nenhum pedido registrado até agora.'));for(const order of data){const panel=document.createElement('div');panel.className='panel';panel.style.margin='12px 0';const heading=document.createElement('h3');heading.textContent='#'+order.id.slice(0,8).toUpperCase()+' · '+order.customer_name+' · '+money(order.total);const info=document.createElement('p');info.className='muted';info.textContent=formatOrderTime(order.created_at)+' · '+(order.fulfillment==='delivery'?'Entrega':'Retirada')+' · '+order.payment+(order.change_for?' · Troco para '+order.change_for:'');const address=document.createElement('p');address.textContent=order.fulfillment==='delivery'?[order.street+', '+order.street_number,order.district,order.reference].filter(Boolean).join(' · '):'Retirada na loja';const ul=document.createElement('ul');for(const item of order.items||[]){const li=document.createElement('li');li.textContent=item.qty+'x '+item.name+' · '+money(item.unit_price*item.qty)+[item.crust,item.cream,item.notes].filter(Boolean).map(x=>' · '+x).join('');ul.append(li)}const totals=document.createElement('p');totals.textContent='Subtotal: '+money(order.subtotal)+' · Entrega: '+money(order.delivery_fee)+' · Total: '+money(order.total);const row=document.createElement('div');row.className='actions';const select=document.createElement('select');select.style.maxWidth='240px';for(const [value,label] of orderStatusOptions){const opt=document.createElement('option');opt.value=value;opt.textContent=label;select.append(opt)}select.value=order.status;const save=document.createElement('button');save.textContent='Salvar andamento';save.type='button';save.onclick=async()=>{save.disabled=true;try{requireOk(await sb.from('orders').update({status:select.value}).eq('id',order.id).select('id'));notice('Andamento atualizado.','success');await loadOrdersAfterSave()}catch(err){fail(err)}finally{save.disabled=false}};row.append(select,save);panel.append(heading,info,address,ul,totals,row);fragment.append(panel)}list.replaceChildren(fragment)}catch(err){fail(err)}finally{ordersLoading=false}}
+pendingOrders=new Set(data.filter(order=>order.status==='received').map(order=>order.id));
+syncPendingAlarm();
+const list=$('ordersList');const fragment=document.createDocumentFragment();if(!data.length)fragment.append(document.createTextNode('Nenhum pedido registrado até agora.'));for(const order of data){const panel=document.createElement('div');panel.className='panel';panel.style.margin='12px 0';const heading=document.createElement('h3');heading.textContent='#'+order.id.slice(0,8).toUpperCase()+' · '+order.customer_name+' · '+money(order.total);const info=document.createElement('p');info.className='muted';info.textContent=formatOrderTime(order.created_at)+' · '+(order.fulfillment==='delivery'?'Entrega':'Retirada')+' · '+order.payment+(order.change_for?' · Troco para '+order.change_for:'');const address=document.createElement('p');address.textContent=order.fulfillment==='delivery'?[order.street+', '+order.street_number,order.district,order.reference].filter(Boolean).join(' · '):'Retirada na loja';const ul=document.createElement('ul');for(const item of order.items||[]){const li=document.createElement('li');li.textContent=item.qty+'x '+item.name+' · '+money(item.unit_price*item.qty)+[item.crust,item.cream,item.notes].filter(Boolean).map(x=>' · '+x).join('');ul.append(li)}const totals=document.createElement('p');totals.textContent='Subtotal: '+money(order.subtotal)+' · Entrega: '+money(order.delivery_fee)+' · Total: '+money(order.total);const row=document.createElement('div');row.className='actions';const select=document.createElement('select');select.style.maxWidth='240px';for(const [value,label] of orderStatusOptions){const opt=document.createElement('option');opt.value=value;opt.textContent=label;select.append(opt)}select.value=order.status;const save=document.createElement('button');save.textContent='Salvar andamento';save.type='button';save.onclick=async()=>{save.disabled=true;try{requireOk(await sb.from('orders').update({status:select.value}).eq('id',order.id).select('id'));notice('Andamento atualizado.','success');await loadOrdersAfterSave()}catch(err){fail(err)}finally{save.disabled=false}};row.append(select,save);
+if(order.status==='received'){
+ const accept=document.createElement('button');accept.textContent='✓ Aceitar pedido';accept.type='button';
+ const reject=document.createElement('button');reject.textContent='✕ Rejeitar pedido';reject.type='button';reject.className='danger';
+ accept.onclick=async()=>{accept.disabled=reject.disabled=true;await setOrderDecision(order,'preparing')};
+ reject.onclick=async()=>{if(!confirm('Rejeitar este pedido?'))return;accept.disabled=reject.disabled=true;await setOrderDecision(order,'cancelled')};
+ row.prepend(accept,reject);
+}
+panel.append(heading,info,address,ul,totals,row);fragment.append(panel)}list.replaceChildren(fragment)}catch(err){fail(err)}finally{ordersLoading=false}}
 async function loadOrdersAfterSave(){ordersLoading=false;await loadOrders()}
 $('refreshOrders').onclick=loadOrders;
-$('newOrderAlert').addEventListener('click',()=>{$('newOrderAlert').classList.add('hidden');document.title='Spazio Pizza | Administração'});
+
 setInterval(()=>{if(!$('app').classList.contains('hidden')&&!ordersLoading&&document.activeElement?.tagName!=='SELECT')loadOrders()},15000);
 function itemRow(title,description,price,active,onEdit){const row=document.createElement('div');row.className='item';const left=document.createElement('div'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=title+(active?'':' · INATIVO');small.textContent=[description,price].filter(Boolean).join(' · ');left.append(strong,small);const btn=document.createElement('button');btn.className='secondary';btn.textContent='Editar';btn.onclick=onEdit;row.append(left,btn);return row;}
 async function loadProducts(){try{products=requireOk(await sb.from('products').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true}));const list=$('productsList');list.replaceChildren();products.forEach(p=>list.append(itemRow(p.name,p.category,money(p.price),p.active,()=>editProduct(p))));notice('');}catch(err){fail(err)}}
