@@ -41,7 +41,7 @@ let DELIVERY_FEE=9;
 // Funcionamento: terça a domingo, 18h às 23h. Segunda-feira fechado. Horário de Brasília.
 let OPENING_HOURS={0:[['18:00','23:00']],1:[],2:[['18:00','23:00']],3:[['18:00','23:00']],4:[['18:00','23:00']],5:[['18:00','23:00']],6:[['18:00','23:00']]};
 function brazilNow(){const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=k=>parts.find(x=>x.type===k)?.value;return {day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(get('weekday')),minute:Number(get('hour'))*60+Number(get('minute'))}}
-function isOpen(){const now=brazilNow(),ranges=OPENING_HOURS[now.day];if(ranges===null)return null;return ranges.some(([a,b])=>{const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3));const start=mins(a),end=mins(b);return end>start?now.minute>=start&&now.minute<end:now.minute>=start||now.minute<end})}
+function isOpen(){const now=brazilNow(),ranges=OPENING_HOURS[now.day];if(!Array.isArray(ranges))return null;return ranges.some(([a,b])=>{const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3));const start=mins(a),end=mins(b);return end>start?now.minute>=start&&now.minute<end:now.minute>=start||now.minute<end})}
 function updateStoreStatus(){const state=isOpen();$('#openingStatus').textContent=state===null?'🕒 Horários de funcionamento: a confirmar':state?'🟢 Estamos abertos agora':'🔴 Estamos fechados no momento';$('#promoBanner').hidden=!isPromoDay()}
 
 // A regra de meia a meia é CONFIGURÁVEL: por padrão aplica-se o maior preço.
@@ -161,7 +161,17 @@ function applySettings(rows){const map={};rows.forEach(r=>map[r.key]=unpack(r.va
  let v=settingValue(map,['delivery_fee','taxa_entrega']);if(v!==undefined&&Number.isFinite(Number(v)))DELIVERY_FEE=Number(v);
  v=settingValue(map,['whatsapp','whatsapp_number']);if(v!==undefined&&String(v).replace(/\D/g,'').length>=10)WHATSAPP=String(v).replace(/\D/g,'');
  v=settingValue(map,['half_price_rule']);if(v==='highest'||v==='first')HALF_PRICE_RULE=v;
- v=settingValue(map,['opening_hours']);if(v&&typeof v==='object')OPENING_HOURS=v;
+ v=settingValue(map,['opening_hours']);if(v&&typeof v==='object'&&!Array.isArray(v)){
+ const dayNames=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+ const parsed={};
+ for(let day=0;day<7;day++){
+  const raw=v[dayNames[day]]??v[String(day)]??[];
+  if(Array.isArray(raw)&&raw.length===2&&raw.every(x=>typeof x==='string'))parsed[day]=[raw];
+  else if(Array.isArray(raw)&&raw.every(range=>Array.isArray(range)&&range.length===2&&range.every(x=>typeof x==='string')))parsed[day]=raw;
+  else parsed[day]=[];
+ }
+ OPENING_HOURS=parsed;
+}
  v=settingValue(map,['tuesday_promo_enabled','promo_tuesday_enabled']);if(typeof v==='boolean')PROMO_ENABLED=v;
 }
 async function loadCatalog(){
