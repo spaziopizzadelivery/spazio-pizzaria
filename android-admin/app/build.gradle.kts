@@ -13,4 +13,5 @@ android {
 }
 dependencies {
  implementation("com.google.firebase:firebase-messaging:24.1.1")
+ implementation("androidx.core:core:1.15.0")
 }
