@@ -26,9 +26,9 @@ function fail(err){console.error(err);notice('Erro: '+(err?.message||String(err)
 function requireOk(result){if(result.error)throw result.error;return result.data;}
 async function checkAdmin(){const {data:{user},error}=await sb.auth.getUser();if(error||!user)return false;const r=await sb.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();if(r.error)throw r.error;return Boolean(r.data);}
 async function registerAndroidPushToken(){
- if(!window.SpazioAndroid?.getFcmToken)return;
+ if(!window.spazioFcmToken)return;
  try{
-  const token=window.SpazioAndroid.getFcmToken();if(!token)return;
+  const token=window.spazioFcmToken;if(!token)return;
   const {data:{user},error}=await sb.auth.getUser();if(error||!user)return;
   const r=await sb.from('admin_push_tokens').upsert({user_id:user.id,token,updated_at:new Date().toISOString()},{onConflict:'token'});
   if(r.error)console.warn('Não foi possível registrar notificações:',r.error.message);
