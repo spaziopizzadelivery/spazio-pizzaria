@@ -25,7 +25,17 @@ function notice(msg,kind=''){const node=$('message');node.textContent=msg;node.c
 function fail(err){console.error(err);notice('Erro: '+(err?.message||String(err)),'error');}
 function requireOk(result){if(result.error)throw result.error;return result.data;}
 async function checkAdmin(){const {data:{user},error}=await sb.auth.getUser();if(error||!user)return false;const r=await sb.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();if(r.error)throw r.error;return Boolean(r.data);}
-async function enter(){const ok=await checkAdmin();$('login').classList.toggle('hidden',ok);$('app').classList.toggle('hidden',!ok);$('logout').classList.toggle('hidden',!ok);if(ok)await Promise.all([loadOrders(),loadProducts(),loadBorders(),loadSettings()]);else notice('Entre com uma conta autorizada para administrar a loja.');}
+async function registerAndroidPushToken(){
+ if(!window.SpazioAndroid?.getFcmToken)return;
+ try{
+  const token=window.SpazioAndroid.getFcmToken();if(!token)return;
+  const {data:{user},error}=await sb.auth.getUser();if(error||!user)return;
+  const r=await sb.from('admin_push_tokens').upsert({user_id:user.id,token,updated_at:new Date().toISOString()},{onConflict:'token'});
+  if(r.error)console.warn('Não foi possível registrar notificações:',r.error.message);
+ }catch(err){console.warn('Registro de notificações:',err)}
+}
+window.spazioRegisterAndroidPushToken=registerAndroidPushToken;
+async function enter(){const ok=await checkAdmin();$('login').classList.toggle('hidden',ok);$('app').classList.toggle('hidden',!ok);$('logout').classList.toggle('hidden',!ok);if(ok){await Promise.all([loadOrders(),loadProducts(),loadBorders(),loadSettings()]);await registerAndroidPushToken();}else notice('Entre com uma conta autorizada para administrar a loja.');}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();try{notice('Entrando...');requireOk(await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}));$('password').value='';await enter();}catch(err){fail(err)}});
 $('logout').onclick=async()=>{await sb.auth.signOut();$('app').classList.add('hidden');$('login').classList.remove('hidden');$('logout').classList.add('hidden');knownOrderIds=null;soundEnabled=false;document.title='Spazio Pizza | Administração';$('newOrderAlert').classList.add('hidden');pendingOrders.clear();stopPendingAlarm();notice('Sessão encerrada.');};
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===btn));['orders','products','borders','settings'].forEach(t=>$(t+'Tab').classList.toggle('hidden',t!==btn.dataset.tab));notice('');});
