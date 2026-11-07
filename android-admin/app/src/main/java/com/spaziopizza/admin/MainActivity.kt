@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.app.Activity
-import android.webkit.JavascriptInterface
 import com.google.firebase.messaging.FirebaseMessaging
 import android.os.Bundle
 import android.webkit.WebChromeClient
@@ -17,9 +16,6 @@ import android.widget.Toast
 class MainActivity : Activity() {
     private lateinit var webView: WebView
     private var fcmToken = ""
-    inner class AndroidBridge {
-        @JavascriptInterface fun getFcmToken(): String = fcmToken
-    }
     private val adminUrl = "https://spaziopizzadelivery.github.io/spazio-pizzaria/admin.html"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,14 +30,18 @@ class MainActivity : Activity() {
         webView.settings.allowFileAccess = false
         webView.settings.allowContentAccess = false
         webView.webChromeClient = WebChromeClient()
-        webView.addJavascriptInterface(AndroidBridge(), "SpazioAndroid")
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             fcmToken = token
             if (webView.url?.startsWith(adminUrl) == true) {
-                webView.evaluateJavascript("window.spazioRegisterAndroidPushToken?.()", null)
+                webView.evaluateJavascript("window.spazioFcmToken = " + org.json.JSONObject.quote(token) + "; window.spazioRegisterAndroidPushToken?.()", null)
             }
         }
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) {
+                if (url.startsWith(adminUrl) && fcmToken.isNotEmpty()) {
+                    view.evaluateJavascript("window.spazioFcmToken = " + org.json.JSONObject.quote(fcmToken) + "; window.spazioRegisterAndroidPushToken?.()", null)
+                }
+            }
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 return !request.url.toString().startsWith("https://spaziopizzadelivery.github.io/spazio-pizzaria/")
             }
