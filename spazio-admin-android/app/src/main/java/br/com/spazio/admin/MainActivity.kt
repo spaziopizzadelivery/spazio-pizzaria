@@ -265,7 +265,7 @@ class MainActivity : Activity() {
     private fun itemCard(title:String,subtitle:String,edit:()->Unit) {
         val c=card(body);c.addView(text(title,16f,true));c.addView(text(subtitle,12f,false,Color.DKGRAY));c.addView(button("Editar",edit,false))
     }
-    private fun runIo(work:()->Any,done:(Any)->Unit) {
+    private fun <T> runIo(work:()->T,done:(T)->Unit) {
         message.text="Conectando…"
         io.execute { try{val result=work();runOnUiThread{if(!isFinishing)done(result)}}catch(e:Exception){runOnUiThread{if(!isFinishing)notice(e.message?:"Falha ao acessar o servidor.")}} }
     }
