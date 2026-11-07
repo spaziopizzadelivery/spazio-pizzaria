@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.app.Activity
+import android.webkit.JavascriptInterface
+import com.google.firebase.messaging.FirebaseMessaging
 import android.os.Bundle
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -14,6 +16,10 @@ import android.widget.Toast
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+    private var fcmToken = ""
+    inner class AndroidBridge {
+        @JavascriptInterface fun getFcmToken(): String = fcmToken
+    }
     private val adminUrl = "https://spaziopizzadelivery.github.io/spazio-pizzaria/admin.html"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,9 +34,16 @@ class MainActivity : Activity() {
         webView.settings.allowFileAccess = false
         webView.settings.allowContentAccess = false
         webView.webChromeClient = WebChromeClient()
+        webView.addJavascriptInterface(AndroidBridge(), "SpazioAndroid")
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            fcmToken = token
+            if (webView.url?.startsWith(adminUrl) == true) {
+                webView.evaluateJavascript("window.spazioRegisterAndroidPushToken?.()", null)
+            }
+        }
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return request.url.scheme != "https"
+                return !request.url.toString().startsWith("https://spaziopizzadelivery.github.io/spazio-pizzaria/")
             }
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                 if (request.isForMainFrame) Toast.makeText(this@MainActivity, "Sem conexão. Verifique sua internet e tente novamente.", Toast.LENGTH_LONG).show()
