@@ -1,5 +1,8 @@
 package com.spaziopizza.admin
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.app.Activity
 import android.os.Bundle
 import android.webkit.WebChromeClient
@@ -15,6 +18,9 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
         webView = WebView(this)
         setContentView(webView)
         webView.settings.javaScriptEnabled = true
