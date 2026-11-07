@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "256861193181",
+    "project_id": "spazio-pizza-admin",
+    "storage_bucket": "spazio-pizza-admin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256861193181:android:8e1e45dc980945aa132c34",
+        "android_client_info": {
+          "package_name": "com.spaziopizza.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2QM885c1KUFbllsHM7h77pSwD0osPACU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
