@@ -117,8 +117,9 @@ class MainActivity : Activity() {
         runIo({
             val u=request("GET","/auth/v1/user")
             userId=u.getString("id")
-            val a=request("GET","/rest/v1/admin_users?select=user_id&user_id=eq."+enc(userId))
-            if(a.length()==0) throw Exception("Esta conta não está autorizada como administradora.")
+            // O PostgREST devolve listas como JSON array, mesmo quando há apenas um registro.
+            val admins=requestArray("GET","/rest/v1/admin_users?select=user_id&user_id=eq."+enc(userId))
+            if(admins.length()==0) throw Exception("Esta conta não está autorizada como administradora.")
             true
         }) { showMain() }
     }
