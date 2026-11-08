@@ -304,7 +304,8 @@ async function loadCatalog(){
  ];
  const [productsResult,bordersResult,settingsResult]=await Promise.allSettled(queries);
  if(productsResult.status==='fulfilled'){
-  PRODUCTS=productsResult.value.map(p=>({...p,price:Number(p.price)}));
+  const categoryRank=p=>p.category==='Bebidas'?2:p.category==='Promoções'?3:1;
+  PRODUCTS=productsResult.value.map(p=>({...p,price:Number(p.price)})).sort((a,b)=>categoryRank(a)-categoryRank(b)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.id).localeCompare(String(b.id)));
  }else{
   console.error('Falha ao carregar produtos:',productsResult.reason);
   PRODUCTS=[];
