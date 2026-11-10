@@ -46,7 +46,10 @@ class MainActivity : Activity() {
             window.isNavigationBarContrastEnforced = false
         }
 
-        val safeArea = FrameLayout(this)
+        val safeArea = FrameLayout(this).apply {
+            // A cor do contêiner também preenche as áreas das barras do sistema.
+            setBackgroundColor(systemBarColor)
+        }
         webView = WebView(this)
         safeArea.addView(webView, FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
