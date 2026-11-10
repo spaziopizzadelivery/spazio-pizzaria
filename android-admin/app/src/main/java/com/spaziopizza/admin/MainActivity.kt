@@ -16,6 +16,9 @@ import android.webkit.WebViewClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceError
 import android.widget.Toast
+import android.widget.FrameLayout
+import android.view.ViewGroup
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -27,20 +30,35 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
         }
-        // Respeita as áreas reservadas pelo Android (barra de status e navegação).
-        // O target SDK 35 usa edge-to-edge por padrão; sem os insets, o conteúdo
-        // do WebView fica por trás do relógio, bateria e ícones do sistema.
-        window.statusBarColor = Color.rgb(26, 21, 17)
+        // Mantém o conteúdo do app dentro da área segura do Android.
+        // Um contêiner externo recebe os insets e desloca o WebView inteiro,
+        // evitando que o cabeçalho e o menu inferior fiquem sob as barras do sistema.
+        val systemBarColor = Color.rgb(26, 21, 17)
+        window.statusBarColor = systemBarColor
+        window.navigationBarColor = systemBarColor
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+        if (Build.VERSION.SDK_INT >= 29) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
 
+        val safeArea = FrameLayout(this)
         webView = WebView(this)
-        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
+        safeArea.addView(webView, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+        ViewCompat.setOnApplyWindowInsetsListener(safeArea) { view, windowInsets ->
             val systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            WindowInsetsCompat.CONSUMED
+            windowInsets
         }
-        setContentView(webView)
-        ViewCompat.requestApplyInsets(webView)
+        setContentView(safeArea)
+        ViewCompat.requestApplyInsets(safeArea)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.allowFileAccess = false
