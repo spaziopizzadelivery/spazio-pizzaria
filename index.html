@@ -54,6 +54,15 @@ html,body{background:#090909;color:var(--ink)}
 .status{color:#e8c590}
 
 
+/* Seletor de tamanho das pizzas */
+.pizza-size-chooser{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
+.pizza-size-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;padding:17px;border:1px solid #594531;border-radius:14px;background:#171513;color:#f5eadb;cursor:pointer}
+.pizza-size-card strong{font:700 18px Georgia,serif;color:#f3d19a}
+.pizza-size-card span{font-size:12px;color:#c0b5a9}
+.pizza-size-card b{font-size:15px;color:#fff}
+.pizza-size-card.selected{border:2px solid #e8c590;background:#2b2016;box-shadow:0 0 0 2px #e8c59022}
+@media(max-width:520px){.pizza-size-chooser{grid-template-columns:1fr}.pizza-size-card{padding:14px}}
+
 /* Seção institucional */
 .store-info{padding-top:52px;padding-bottom:54px}
 .store-info-heading{text-align:center;max-width:620px;margin:0 auto 26px}
@@ -122,6 +131,8 @@ let HALF_PRICE_RULE='highest';
 const format=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
 const $=s=>document.querySelector(s);
 let category='Todos',cart=[],selectedProduct=null,qty=1,lastFocus=null;
+let selectedPizzaSize='large';
+function pizzaPrice(p){return Number((Number(p.price)*(selectedPizzaSize==='small'?0.6:1)).toFixed(2))}
 // Promoção válida às terças-feiras, no horário de Brasília.
 let PROMO_ENABLED=true;
 function isPromoDay(){return PROMO_ENABLED&&new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'long'}).format(new Date())==='Tuesday'}
@@ -152,12 +163,26 @@ function renderCatalog(){updateStoreStatus();
  const promo=refreshPromo();const q=$('#search').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
  const data=category==='Promoções'?[]:PRODUCTS.filter(p=>(category==='Todos'||p.category===category)&&(`${p.name} ${p.description}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q)));
  $('#catalog').replaceChildren();$('#count').textContent=category==='Promoções'?'Toda terça-feira':data.length+(category==='Bebidas'?' bebidas':' produtos');$('#sectionTitle').textContent=category==='Todos'?'Nosso cardápio':category;$('#empty').hidden=category==='Promoções'||data.length>0;
+ if(category==='Todos'||category==='Tradicionais'||category==='Especiais'||category==='Pizzas'){
+  const pizzas=PRODUCTS.filter(p=>p.category!=='Bebidas');
+  if(pizzas.length){
+   const cheapest=Math.min(...pizzas.map(p=>Number(p.price)));
+   const chooser=el('div','pizza-size-chooser');
+   const large=el('button','pizza-size-card'+(selectedPizzaSize==='large'?' selected':''),'');
+   large.type='button';large.innerHTML='<strong>🍕 Pizza Grande</strong><span>35 cm · 8 fatias</span><b>A partir de '+format(cheapest)+'</b>';
+   const small=el('button','pizza-size-card'+(selectedPizzaSize==='small'?' selected':''),'');
+   small.type='button';small.innerHTML='<strong>🍕 Pizza Pequena</strong><span>25 cm · 4 fatias</span><b>A partir de '+format(cheapest*.6)+'</b>';
+   large.onclick=()=>{selectedPizzaSize='large';renderCatalog()};
+   small.onclick=()=>{selectedPizzaSize='small';renderCatalog()};
+   chooser.append(large,small);$('#catalog').append(chooser);
+  }
+ }
  if(category==='Promoções'&&promo){
   const card=el('article','card'),copy=el('div','card-copy');copy.append(el('div','chip','🎁 Terça da borda grátis'),el('h4','','Borda recheada de cortesia'),el('p','','Toda terça-feira, escolha qualquer pizza e ganhe uma borda recheada de Catupiry, Cheddar, Cream Cheese ou Chocolate, sem pagar os R$ 15,00 adicionais. A cortesia é aplicada automaticamente ao personalizar sua pizza.'));const btn=el('button','add','Escolher minha pizza →');btn.onclick=()=>{category='Todos';document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Todos'));renderCatalog()};copy.append(btn);card.append(copy);$('#catalog').append(card);return;
  }
  let previousGroup='';
  const groupName=p=>p.category==='Bebidas'?'Bebidas':(['Tradicionais','Especiais','Pizzas'].includes(p.category)?'Pizzas':p.category||'Outros');
- data.forEach(p=>{const currentGroup=groupName(p);if(category==='Todos'&&currentGroup!==previousGroup){const heading=el('div','catalog-group-heading');const headingText=el('div','catalog-group-title');const symbol=el('span','catalog-group-icon',currentGroup==='Pizzas'?'🍕':currentGroup==='Bebidas'?'🥤':'✦');const name=el('h4','',currentGroup);headingText.append(symbol,name);const line=el('div','catalog-group-line');line.setAttribute('aria-hidden','true');heading.append(headingText,line);$('#catalog').append(heading)}previousGroup=currentGroup;const card=el('article','card'),copy=el('div','card-copy'),chip=el('div','chip',p.category),title=el('h4','',p.name),desc=el('p','',p.description),bottom=el('div','card-bottom'),price=el('div','price');price.append(el('small','',p.category==='Bebidas'?'Preço':'A partir de'),el('strong','',format(p.price)));const btn=el('button','add','Adicionar +');btn.type='button';btn.addEventListener('click',()=>p.category==='Bebidas'?openBeverage(p):openProduct(p));bottom.append(price,btn);copy.append(chip,title,desc,bottom);const art=el('div','card-art'),pizza=el('span','',p.category==='Bebidas'?'🥤':p.category==='Especiais'?'🌟':'🍕');art.setAttribute('aria-hidden','true');if(p.image_url){const photo=document.createElement('img');photo.src=p.image_url;photo.alt='Foto de '+p.name;photo.loading='lazy';photo.decoding='async';photo.style.cssText='width:100%;height:100%;object-fit:cover';pizza.hidden=true;photo.onerror=()=>{photo.remove();pizza.hidden=false};art.append(photo)}art.append(pizza);card.append(copy,art);$('#catalog').append(card)})
+ data.forEach(p=>{const currentGroup=groupName(p);if(category==='Todos'&&currentGroup!==previousGroup){const heading=el('div','catalog-group-heading');const headingText=el('div','catalog-group-title');const symbol=el('span','catalog-group-icon',currentGroup==='Pizzas'?'🍕':currentGroup==='Bebidas'?'🥤':'✦');const name=el('h4','',currentGroup);headingText.append(symbol,name);const line=el('div','catalog-group-line');line.setAttribute('aria-hidden','true');heading.append(headingText,line);$('#catalog').append(heading)}previousGroup=currentGroup;const card=el('article','card'),copy=el('div','card-copy'),chip=el('div','chip',p.category),title=el('h4','',p.name),desc=el('p','',p.description),bottom=el('div','card-bottom'),price=el('div','price');price.append(el('small','',p.category==='Bebidas'?'Preço':'A partir de'),el('strong','',format(p.category==='Bebidas'?p.price:pizzaPrice(p))));const btn=el('button','add','Adicionar +');btn.type='button';btn.addEventListener('click',()=>p.category==='Bebidas'?openBeverage(p):openProduct(p));bottom.append(price,btn);copy.append(chip,title,desc,bottom);const art=el('div','card-art'),pizza=el('span','',p.category==='Bebidas'?'🥤':p.category==='Especiais'?'🌟':'🍕');art.setAttribute('aria-hidden','true');if(p.image_url){const photo=document.createElement('img');photo.src=p.image_url;photo.alt='Foto de '+p.name;photo.loading='lazy';photo.decoding='async';photo.style.cssText='width:100%;height:100%;object-fit:cover';pizza.hidden=true;photo.onerror=()=>{photo.remove();pizza.hidden=false};art.append(photo)}art.append(pizza);card.append(copy,art);$('#catalog').append(card)})
 }
 $('#search').addEventListener('input',renderCatalog);$('#filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x===b));renderCatalog()});
 function showModal(title){lastFocus=document.activeElement;$('#modalTitle').textContent=title;$('#overlay').hidden=false;document.body.style.overflow='hidden';$('#closeModal').focus()}
@@ -182,7 +207,7 @@ function openProduct(product){
  let half=false,second=null,cream='',crust=CRUST_OPTIONS[0],notes='',selectedExtras=[];
  const EXTRA_OPTIONS=[{name:'Queijos',price:10},{name:'Carnes',price:8},{name:'Vegetais',price:5},{name:'Molhos',price:5},{name:'Massa grossa',price:5}];
  function extrasPrice(){return selectedExtras.reduce((sum,x)=>sum+x.price,0)}
- function basePrice(){return half&&second?(HALF_PRICE_RULE==='highest'?Math.max(product.price,second.price):product.price):product.price}
+ function basePrice(){return half&&second?(HALF_PRICE_RULE==='highest'?Math.max(pizzaPrice(product),pizzaPrice(second)):pizzaPrice(product)):pizzaPrice(product)}
  function totalPrice(){return basePrice()+(isPromoDay()?0:crust.price)}
  let drinkSelection={};
  function renderDrinksStep(){
@@ -218,7 +243,7 @@ function openProduct(product){
    const add=el('button','primary','Adicionar ao carrinho · '+format((totalPrice()+extrasPrice())*qty+drinkTotal));
    add.type='button';add.onclick=()=>{
     const extrasText=selectedExtras.length?'Adicionais: '+selectedExtras.map(x=>x.name).join(', '):'';
-    const item={key:Date.now()+'-'+Math.random(),name:half&&second?product.name+' / '+second.name:product.name,unit:totalPrice()+extrasPrice(),basePrice:basePrice(),extras:selectedExtras.map(x=>({...x})),extrasPrice:extrasPrice(),qty,notes:[notes.trim(),extrasText].filter(Boolean).join(' | '),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
+    const item={key:Date.now()+'-'+Math.random(),name:(half&&second?product.name+' / '+second.name:product.name)+' ('+(selectedPizzaSize==='small'?'25cm':'35cm')+')',unit:totalPrice()+extrasPrice(),basePrice:basePrice(),extras:selectedExtras.map(x=>({...x})),extrasPrice:extrasPrice(),qty,notes:[notes.trim(),extrasText].filter(Boolean).join(' | '),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
     cart.push(item);
     for(const drink of chosen)cart.push({key:Date.now()+'-'+Math.random(),name:drink.name,unit:drink.price,qty:drinkSelection[drink.id],notes:'',cream:'',half:false,crust:'',crustPrice:0});
     updateCart();closeModal();
@@ -231,7 +256,7 @@ function openProduct(product){
  function renderFlavorStep(){
   $('#modalTitle').textContent=product.name+' · Sabores';body.replaceChildren();foot.replaceChildren();
   body.append(el('p','',product.description),el('span','field','1 de 3 · Escolha os sabores'));
-  const choices=el('div','');choices.append(labelledRadio('kind','whole','Um sabor · '+format(product.price),!half),labelledRadio('kind','half','Meio a meio · dois sabores',half));body.append(choices);
+  const choices=el('div','');choices.append(labelledRadio('kind','whole','Um sabor · '+format(pizzaPrice(product)),!half),labelledRadio('kind','half','Meio a meio · dois sabores',half));body.append(choices);
   const secondWrap=el('div',half?'':'hidden');secondWrap.append(el('label','field','Escolha o segundo sabor'));
   const select=el('select','entry');select.id='secondFlavor';
   for(const p of PRODUCTS.filter(x=>x.id!==product.id&&x.category!=='Bebidas')){const op=el('option','',p.name+' · '+format(p.price));op.value=p.id;select.append(op)}
