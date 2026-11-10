@@ -126,7 +126,7 @@ let category='Todos',cart=[],selectedProduct=null,qty=1,lastFocus=null;
 let PROMO_ENABLED=true;
 function isPromoDay(){return PROMO_ENABLED&&new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'long'}).format(new Date())==='Tuesday'}
 function effectiveCrustPrice(item){return item.crustId&&item.crustId!=='traditional'&&!isPromoDay()?(Number(item.crustPrice)||0):0}
-function itemUnit(item){return item.basePrice!==undefined?item.basePrice+effectiveCrustPrice(item):item.unit}
+function itemUnit(item){return item.basePrice!==undefined?item.basePrice+effectiveCrustPrice(item)+(Number(item.extrasPrice)||0):item.unit}
 function refreshPromo(){const active=isPromoDay();$('#promoFilter').hidden=!active;if(!active&&category==='Promoções'){category='Todos';document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Todos'))}return active}
 
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
@@ -164,6 +164,7 @@ function showModal(title){lastFocus=document.activeElement;$('#modalTitle').text
 function closeModal(){ $('#overlay').hidden=true;document.body.style.overflow='';if(lastFocus&&lastFocus.isConnected)lastFocus.focus() }
 $('#closeModal').addEventListener('click',closeModal);$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeModal();if(e.key==='Tab'&&!$('#overlay').hidden){const focusables=[...$('#overlay').querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled)')].filter(n=>n.offsetParent!==null);if(!focusables.length)return;const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 function labelledRadio(name,value,caption,checked=false){const label=el('label','option'),inp=document.createElement('input');inp.type='radio';inp.name=name;inp.value=value;inp.checked=checked;label.append(inp,document.createTextNode(caption));return label}
+function labelledCheckbox(value,caption,checked=false){const label=el('label','option'),inp=document.createElement('input');inp.type='checkbox';inp.value=value;inp.checked=checked;label.append(inp,document.createTextNode(caption));return label}
 let CRUST_OPTIONS=[
  {id:'traditional',label:'Massa tradicional',price:0},
  {id:'catupiry',label:'Borda recheada de Catupiry',price:15},
@@ -178,13 +179,15 @@ function openBeverage(product){
 function openProduct(product){
  selectedProduct=product;qty=1;showModal(product.name);
  const body=$('#modalBody'),foot=$('#modalFoot');
- let half=false,second=null,cream='',crust=CRUST_OPTIONS[0],notes='';
+ let half=false,second=null,cream='',crust=CRUST_OPTIONS[0],notes='',selectedExtras=[];
+ const EXTRA_OPTIONS=[{name:'Queijos',price:10},{name:'Carnes',price:8},{name:'Vegetais',price:5},{name:'Molhos',price:5},{name:'Massa grossa',price:5}];
+ function extrasPrice(){return selectedExtras.reduce((sum,x)=>sum+x.price,0)}
  function basePrice(){return half&&second?(HALF_PRICE_RULE==='highest'?Math.max(product.price,second.price):product.price):product.price}
  function totalPrice(){return basePrice()+(isPromoDay()?0:crust.price)}
  let drinkSelection={};
  function renderDrinksStep(){
   $('#modalTitle').textContent=product.name+' · Bebidas';body.replaceChildren();foot.replaceChildren();
-  body.append(el('span','field','3 de 3 · Escolha suas bebidas'),el('p','','Selecione uma ou mais bebidas, ou continue sem bebidas.'));
+  body.append(el('span','field','4 de 4 · Escolha suas bebidas'),el('p','','Selecione uma ou mais bebidas, ou continue sem bebidas.'));
   const drinks=PRODUCTS.filter(p=>p.category==='Bebidas');
   const none=labelledRadio('drinkChoice','none','Sem bebidas',Object.values(drinkSelection).every(v=>v===0));
   const withDrinks=labelledRadio('drinkChoice','yes','Escolher bebidas',Object.values(drinkSelection).some(v=>v>0));
@@ -209,12 +212,13 @@ function openProduct(product){
     }
    }
    foot.replaceChildren();
-   const back=el('button','','← Massa e borda');back.type='button';back.className='secondary';back.onclick=renderCrustStep;
+   const back=el('button','','← Adicionais');back.type='button';back.className='secondary';back.onclick=renderExtrasStep;
    const chosen=enabled?drinks.filter(d=>(drinkSelection[d.id]||0)>0):[];
    const drinkTotal=chosen.reduce((sum,d)=>sum+d.price*drinkSelection[d.id],0);
-   const add=el('button','primary','Adicionar ao carrinho · '+format(totalPrice()*qty+drinkTotal));
+   const add=el('button','primary','Adicionar ao carrinho · '+format((totalPrice()+extrasPrice())*qty+drinkTotal));
    add.type='button';add.onclick=()=>{
-    const item={key:Date.now()+'-'+Math.random(),name:half&&second?product.name+' / '+second.name:product.name,unit:totalPrice(),basePrice:basePrice(),qty,notes:notes.trim(),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
+    const extrasText=selectedExtras.length?'Adicionais: '+selectedExtras.map(x=>x.name).join(', '):'';
+    const item={key:Date.now()+'-'+Math.random(),name:half&&second?product.name+' / '+second.name:product.name,unit:totalPrice()+extrasPrice(),basePrice:basePrice(),extras:selectedExtras.map(x=>({...x})),extrasPrice:extrasPrice(),qty,notes:[notes.trim(),extrasText].filter(Boolean).join(' | '),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
     cart.push(item);
     for(const drink of chosen)cart.push({key:Date.now()+'-'+Math.random(),name:drink.name,unit:drink.price,qty:drinkSelection[drink.id],notes:'',cream:'',half:false,crust:'',crustPrice:0});
     updateCart();closeModal();
@@ -243,9 +247,32 @@ function openProduct(product){
   }
   const next=el('button','primary','Continuar · Escolher massa e borda →');next.type='button';next.addEventListener('click',renderCrustStep);foot.append(next);
  }
+ function renderExtrasStep(){
+  $('#modalTitle').textContent=product.name+' · Adicionais';body.replaceChildren();foot.replaceChildren();
+  body.append(el('span','field','3 de 4 · ADICIONAIS (Pizza Inteira)'));
+  if(half){
+   body.append(el('p','','Os adicionais são disponíveis somente para pizzas inteiras. Como você escolheu meio a meio, pode continuar para as bebidas.'));
+  }else{
+   body.append(el('p','','Escolha quantos adicionais quiser. Cada categoria selecionada será acrescentada uma vez ao preço da pizza.'));
+   const options=el('div','');
+   for(const option of EXTRA_OPTIONS)options.append(labelledCheckbox(option.name,option.name+' · + '+format(option.price),selectedExtras.some(x=>x.name===option.name)));
+   body.append(options);
+   options.addEventListener('change',()=>{
+    selectedExtras=EXTRA_OPTIONS.filter(x=>options.querySelector('input[value="'+x.name+'"]')?.checked);
+    renderFoot();
+   });
+  }
+  function renderFoot(){
+   foot.replaceChildren();
+   const back=el('button','','← Massa e borda');back.type='button';back.className='secondary';back.onclick=renderCrustStep;
+   const next=el('button','primary','Continuar · Escolher bebidas →');next.type='button';next.onclick=renderDrinksStep;
+   foot.append(back,next);
+  }
+  renderFoot();
+ }
  function renderCrustStep(){
   $('#modalTitle').textContent=product.name+' · Massa e borda';body.replaceChildren();foot.replaceChildren();
-  body.append(el('span','field','2 de 3 · Escolha a massa ou borda'));
+  body.append(el('span','field','2 de 4 · Escolha a massa ou borda'));
   body.append(el('p','',isPromoDay()?'🎁 Promoção de terça-feira: qualquer borda recheada é cortesia!':'Escolha uma opção. Confira os valores de cada borda abaixo.'));
   const options=el('div','');
   for(const option of CRUST_OPTIONS){options.append(labelledRadio('crust',option.id,option.label+' · '+(option.price?(isPromoDay()?'GRÁTIS hoje':'+ '+format(option.price)):'Sem acréscimo'),crust.id===option.id))}
@@ -257,14 +284,14 @@ function openProduct(product){
   function renderFoot(){
    foot.replaceChildren();const back=el('button','','← Voltar');back.type='button';back.style.cssText='border:1px solid #ddd4ca;background:white;border-radius:10px;padding:12px';back.addEventListener('click',renderFlavorStep);
    const controls=el('div','qty'),minus=el('button','','−'),count=el('strong','',String(qty)),plus=el('button','','+');minus.type=plus.type='button';minus.setAttribute('aria-label','Diminuir quantidade');plus.setAttribute('aria-label','Aumentar quantidade');minus.addEventListener('click',()=>{qty=Math.max(1,qty-1);renderFoot()});plus.addEventListener('click',()=>{qty=Math.min(99,qty+1);renderFoot()});controls.append(minus,count,plus);
-   const add=el('button','primary','Continuar · Escolher bebidas →');add.type='button';add.addEventListener('click',renderDrinksStep);foot.append(back,controls,add);
+   const add=el('button','primary','Continuar · Adicionais →');add.type='button';add.addEventListener('click',renderExtrasStep);foot.append(back,controls,add);
   }
   renderFoot();
  }
  renderFlavorStep();
 }
 function updateCart(){const n=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+x.qty*itemUnit(x),0);$('#headerCount').textContent=`(${n})`;$('#basketBar').hidden=n===0;$('#basketLabel').textContent=n===1?'1 item':n+' itens';$('#basketValue').textContent=format(total)}
-function showCart(){showModal('Seu carrinho');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();if(!cart.length){body.append(el('p','','Seu carrinho está vazio. Escolha uma pizza para começar!'));const back=el('button','primary','Ver cardápio');back.onclick=closeModal;foot.append(back);return}cart.forEach(item=>{const row=el('div','cart-item');row.append(el('strong','',item.name));const details=[item.half?'Meia a meia':null,item.cream?'Opção: '+item.cream:null,item.crust?'Massa/borda: '+item.crust+(item.crustId&&item.crustId!=='traditional'?(isPromoDay()?' (CORTESIA DE TERÇA)':' (+ '+format(effectiveCrustPrice(item))+')'):''):null,item.notes?'Obs.: '+item.notes:null].filter(Boolean);if(details.length)row.append(el('p','',details.join(' • ')));const line=el('div','cart-row'),amount=el('strong','',format(item.qty*itemUnit(item))),controls=el('div','qty'),minus=el('button','','−'),count=el('span','',String(item.qty)),plus=el('button','','+');minus.setAttribute('aria-label','Reduzir '+item.name);plus.setAttribute('aria-label','Aumentar '+item.name);minus.addEventListener('click',()=>{item.qty--;if(item.qty<=0)cart=cart.filter(x=>x!==item);updateCart();showCart()});plus.addEventListener('click',()=>{item.qty=Math.min(item.qty+1,99);updateCart();showCart()});controls.append(minus,count,plus);line.append(controls,amount);row.append(line);body.append(row)});if(cart.some(x=>x.basePrice!==undefined)&&!cart.some(x=>PRODUCTS.some(p=>p.category==='Bebidas'&&p.name===x.name))){const panel=el('div','suggestions');panel.append(el('h4','','🥤 Que tal uma bebida para acompanhar?'));for(const p of PRODUCTS.filter(p=>p.category==='Bebidas').slice(0,3)){const line=el('div','suggestion'),info=el('span','',p.name+' · '+format(p.price)),add=el('button','','Adicionar +');add.type='button';add.onclick=()=>{cart.push({key:Date.now()+'-'+Math.random(),name:p.name,unit:p.price,qty:1,notes:'',cream:'',half:false,crust:'',crustPrice:0});updateCart();showCart()};line.append(info,add);panel.append(line)}body.append(panel)}
+function showCart(){showModal('Seu carrinho');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();if(!cart.length){body.append(el('p','','Seu carrinho está vazio. Escolha uma pizza para começar!'));const back=el('button','primary','Ver cardápio');back.onclick=closeModal;foot.append(back);return}cart.forEach(item=>{const row=el('div','cart-item');row.append(el('strong','',item.name));const details=[item.half?'Meia a meia':null,item.cream?'Opção: '+item.cream:null,item.crust?'Massa/borda: '+item.crust+(item.crustId&&item.crustId!=='traditional'?(isPromoDay()?' (CORTESIA DE TERÇA)':' (+ '+format(effectiveCrustPrice(item))+')'):''):null,item.extras?.length?'Adicionais: '+item.extras.map(x=>x.name+' (+ '+format(x.price)+')').join(', '):null,item.notes?'Obs.: '+item.notes:null].filter(Boolean);if(details.length)row.append(el('p','',details.join(' • ')));const line=el('div','cart-row'),amount=el('strong','',format(item.qty*itemUnit(item))),controls=el('div','qty'),minus=el('button','','−'),count=el('span','',String(item.qty)),plus=el('button','','+');minus.setAttribute('aria-label','Reduzir '+item.name);plus.setAttribute('aria-label','Aumentar '+item.name);minus.addEventListener('click',()=>{item.qty--;if(item.qty<=0)cart=cart.filter(x=>x!==item);updateCart();showCart()});plus.addEventListener('click',()=>{item.qty=Math.min(item.qty+1,99);updateCart();showCart()});controls.append(minus,count,plus);line.append(controls,amount);row.append(line);body.append(row)});if(cart.some(x=>x.basePrice!==undefined)&&!cart.some(x=>PRODUCTS.some(p=>p.category==='Bebidas'&&p.name===x.name))){const panel=el('div','suggestions');panel.append(el('h4','','🥤 Que tal uma bebida para acompanhar?'));for(const p of PRODUCTS.filter(p=>p.category==='Bebidas').slice(0,3)){const line=el('div','suggestion'),info=el('span','',p.name+' · '+format(p.price)),add=el('button','','Adicionar +');add.type='button';add.onclick=()=>{cart.push({key:Date.now()+'-'+Math.random(),name:p.name,unit:p.price,qty:1,notes:'',cream:'',half:false,crust:'',crustPrice:0});updateCart();showCart()};line.append(info,add);panel.append(line)}body.append(panel)}
 const total=cart.reduce((s,x)=>s+x.qty*itemUnit(x),0),tot=el('div','cart-total');tot.append(el('span','','Subtotal'),el('span','',format(total)));body.append(tot,el('p','note','Taxa fixa de entrega: '+format(DELIVERY_FEE)+'. Para retirada, não há taxa. O total será exibido na finalização.'));const order=el('button','primary','Finalizar pelo WhatsApp →');order.addEventListener('click',()=>showCheckout());foot.append(order)}
 let customerData={name:'',whatsapp:'',mode:'delivery',street:'',number:'',district:'',reference:'',payment:'',change:''};
 function showCheckout(){if(!cart.length)return;showModal('Finalizar pedido');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();body.append(el('p','','Preencha os dados para enviarmos seu pedido completo pelo WhatsApp.'));const form=el('form','');form.id='checkoutForm';
