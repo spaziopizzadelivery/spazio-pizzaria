@@ -135,9 +135,7 @@
 <div class="grid"><div><label for="manualCustomer">Nome do cliente *</label><input id="manualCustomer" maxlength="120" required></div><div><label for="manualWhatsapp">WhatsApp com DDD</label><input id="manualWhatsapp" type="tel" inputmode="numeric" maxlength="15" placeholder="DDD + número"></div></div>
 <label>Como o cliente receberá?</label><select id="manualFulfillment"><option value="delivery">Entrega</option><option value="pickup">Retirada no balcão</option></select>
 <div id="manualAddress" class="grid"><div><label for="manualStreet">Rua / Avenida *</label><input id="manualStreet" maxlength="120"></div><div><label for="manualNumber">Número *</label><input id="manualNumber" maxlength="30"></div><div><label for="manualDistrict">Bairro *</label><input id="manualDistrict" maxlength="120"></div><div><label for="manualReference">Complemento / referência</label><input id="manualReference" maxlength="160"></div></div>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px"><h3 style="margin:0">Itens do pedido</h3><button type="button" class="secondary" id="manualAddItem">+ Adicionar item</button></div>
-<div id="manualItems"></div>
-<div class="grid"><div><label for="manualPayment">Forma de pagamento *</label><select id="manualPayment" required><option value="">Selecione</option><option>Pix</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option></select></div><div id="manualChangeWrap"><label for="manualChange">Troco para quanto?</label><input id="manualChange" inputmode="decimal" maxlength="30"></div></div>
+<div style="margin-top:18px"><h3>🍕 Pizza</h3><div id="manualPizzaItems"></div><button type="button" class="secondary" id="manualAddItem">+ Adicionar pizza</button></div><div style="margin-top:22px"><h3>🥤 Bebidas</h3><div id="manualDrinkItems"></div><button type="button" class="secondary" id="manualAddDrink">+ Adicionar bebida</button></div><div class="grid"><div><label for="manualPayment">Forma de pagamento *</label><select id="manualPayment" required><option value="">Selecione</option><option>Pix</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option></select></div><div id="manualChangeWrap"><label for="manualChange">Troco para quanto?</label><input id="manualChange" inputmode="decimal" maxlength="30"></div></div>
 <div id="manualTotals" class="customer-details" style="margin-top:16px"></div>
 <div class="actions"><button type="submit" id="manualSave">Registrar pedido</button><button type="button" class="secondary" id="manualCancel">Cancelar</button></div>
 </form>
@@ -356,44 +354,39 @@ async function loadOrdersAfterSave(){ordersLoading=false;await loadOrders()}
 
 const manualOrderForm=$('manualOrderForm');
 function manualDeliveryFee(){const value=settings.find(s=>s.key==='delivery_fee')?.value;return Number.isFinite(Number(value))?Number(value):9;}
-function manualItemRow(){
+function manualItemRow(kind='pizza'){
+ const drink=kind==='drink',container=$(drink?'manualDrinkItems':'manualPizzaItems'),available=products.filter(p=>p.active&&(drink?p.category==='Bebidas':p.category!=='Bebidas'));
  const row=document.createElement('div');row.className='panel';row.style.cssText='padding:12px;margin:10px 0;border:1px solid #eadfd3;box-shadow:none';
  const grid=document.createElement('div');grid.className='grid';
- const productWrap=document.createElement('div');const productLabel=document.createElement('label');productLabel.textContent='Produto *';
- const productSelect=document.createElement('select');productSelect.className='manual-product';productSelect.required=true;
- const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Selecione um produto';productSelect.append(placeholder);
- products.filter(p=>p.active).forEach(p=>{const option=document.createElement('option');option.value=String(p.id);option.textContent=p.name+' — '+money(p.price);option.dataset.price=String(p.price);productSelect.append(option)});
- productWrap.append(productLabel,productSelect);
- const qtyWrap=document.createElement('div');const qtyLabel=document.createElement('label');qtyLabel.textContent='Quantidade';const qty=document.createElement('input');qty.type='number';qty.className='manual-qty';qty.min='1';qty.step='1';qty.value='1';qty.required=true;qtyWrap.append(qtyLabel,qty);
- const priceWrap=document.createElement('div');const priceLabel=document.createElement('label');priceLabel.textContent='Preço unitário (R$)';const price=document.createElement('input');price.type='number';price.className='manual-price';price.min='0';price.step='0.01';price.required=true;price.value='0';priceWrap.append(priceLabel,price);
- grid.append(productWrap,qtyWrap,priceWrap);
- const noteWrap=document.createElement('div');const noteLabel=document.createElement('label');noteLabel.textContent='Observação / detalhes (opcional)';const note=document.createElement('input');note.className='manual-note';note.maxLength=300;note.placeholder='Ex.: meia calabresa, borda Catupiry...';noteWrap.append(noteLabel,note);
- const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Remover item';remove.style.marginTop='10px';remove.onclick=()=>{if($('manualItems').children.length>1)row.remove();else{productSelect.value='';qty.value='1';price.value='0';note.value='';}updateManualTotals()};
- productSelect.addEventListener('change',()=>{const option=productSelect.selectedOptions[0];price.value=option?.dataset.price||'0';updateManualTotals()});
- [qty,price,note].forEach(input=>input.addEventListener('input',updateManualTotals));
- row.append(grid,noteWrap,remove);$('manualItems').append(row);return row;
+ function field(label,cls){const wrap=document.createElement('div'),l=document.createElement('label');l.textContent=label;const sel=document.createElement('select');sel.className=cls;wrap.append(l,sel);grid.append(wrap);return sel}
+ const first=field(drink?'Bebida *':'Primeiro sabor *','manual-product');first.required=true;first.innerHTML='<option value="">Selecione</option>';
+ available.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+money(p.price);o.dataset.price=p.price;first.append(o)});
+ let mode=null,second=null,secondWrap=null;
+ if(!drink){mode=field('Tipo de pizza','manual-pizza-mode');mode.innerHTML='<option value="whole">Inteira · um sabor</option><option value="half">Meio a meio</option>';second=field('Segundo sabor *','manual-second-product');second.innerHTML='<option value="">Selecione o segundo sabor</option>';available.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' — '+money(p.price);o.dataset.price=p.price;second.append(o)});secondWrap=second.parentElement;secondWrap.classList.add('hidden');mode.addEventListener('change',()=>{secondWrap.classList.toggle('hidden',mode.value!=='half');second.required=mode.value==='half';sync()});second.addEventListener('change',sync)}
+ const qtyWrap=document.createElement('div'),ql=document.createElement('label'),qty=document.createElement('input');ql.textContent='Quantidade';qty.type='number';qty.className='manual-qty';qty.min='1';qty.step='1';qty.value='1';qty.required=true;qtyWrap.append(ql,qty);grid.append(qtyWrap);
+ const priceWrap=document.createElement('div'),pl=document.createElement('label'),price=document.createElement('input');pl.textContent='Preço unitário (R$)';price.type='number';price.className='manual-price';price.min='0';price.step='0.01';price.value='0';price.required=true;priceWrap.append(pl,price);grid.append(priceWrap);
+ const noteWrap=document.createElement('div'),nl=document.createElement('label'),note=document.createElement('input');nl.textContent='Observação / detalhes (opcional)';note.className='manual-note';note.maxLength=300;note.placeholder=drink?'Ex.: sem gelo':'Ex.: borda Catupiry, retirar cebola';noteWrap.append(nl,note);
+ const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Remover '+(drink?'bebida':'pizza');remove.onclick=()=>{row.remove();updateManualTotals()};
+ function sync(){let p=Number(first.selectedOptions[0]?.dataset.price)||0;if(!drink&&mode.value==='half'&&second.value)p=Math.max(p,Number(second.selectedOptions[0]?.dataset.price)||0);price.value=p.toFixed(2);updateManualTotals()}
+ first.addEventListener('change',sync);qty.addEventListener('input',updateManualTotals);price.addEventListener('input',updateManualTotals);row.append(grid,noteWrap,remove);container.append(row);return row;
 }
-function updateManualTotals(){
- const subtotal=[...$('manualItems').children].reduce((sum,row)=>sum+Math.max(0,Number(row.querySelector('.manual-qty').value)||0)*Math.max(0,Number(row.querySelector('.manual-price').value)||0),0);
- const fee=$('manualFulfillment').value==='delivery'?manualDeliveryFee():0;
- $('manualTotals').textContent='Subtotal: '+money(subtotal)+' · Entrega: '+money(fee)+' · Total: '+money(subtotal+fee);
-}
+function updateManualTotals(){const rows=[...$('manualPizzaItems').children,...$('manualDrinkItems').children];const subtotal=rows.reduce((sum,row)=>sum+Math.max(0,Number(row.querySelector('.manual-qty').value)||0)*Math.max(0,Number(row.querySelector('.manual-price').value)||0),0);const fee=$('manualFulfillment').value==='delivery'?manualDeliveryFee():0;$('manualTotals').textContent='Subtotal: '+money(subtotal)+' · Entrega: '+money(fee)+' · Total: '+money(subtotal+fee);}
 function toggleManualAddress(){const delivery=$('manualFulfillment').value==='delivery';$('manualAddress').classList.toggle('hidden',!delivery);['manualStreet','manualNumber','manualDistrict'].forEach(id=>$(id).required=delivery);updateManualTotals();}
-$('newManualOrder').onclick=()=>{manualOrderForm.classList.remove('hidden');if(!$('manualItems').children.length)manualItemRow();manualOrderForm.scrollIntoView({behavior:'smooth',block:'start'});};
-$('manualCancel').onclick=()=>{manualOrderForm.classList.add('hidden');manualOrderForm.reset();$('manualItems').replaceChildren();};
-$('manualAddItem').onclick=()=>manualItemRow();
+$('newManualOrder').onclick=()=>{manualOrderForm.classList.remove('hidden');if(!$('manualPizzaItems').children.length&&!$('manualDrinkItems').children.length)manualItemRow('pizza');manualOrderForm.scrollIntoView({behavior:'smooth',block:'start'});};
+$('manualCancel').onclick=()=>{manualOrderForm.classList.add('hidden');manualOrderForm.reset();$('manualPizzaItems').replaceChildren();$('manualDrinkItems').replaceChildren();};
+$('manualAddItem').onclick=()=>manualItemRow('pizza');$('manualAddDrink').onclick=()=>manualItemRow('drink');
 $('manualFulfillment').addEventListener('change',toggleManualAddress);
 $('manualPayment').addEventListener('change',()=>$('manualChangeWrap').classList.toggle('hidden',$('manualPayment').value!=='Dinheiro'));
 manualOrderForm.addEventListener('submit',async event=>{
  event.preventDefault();const button=$('manualSave');if(button.disabled)return;
- const rows=[...$('manualItems').children];const items=[];
- for(const row of rows){const productId=row.querySelector('.manual-product').value;const qty=Number(row.querySelector('.manual-qty').value);const unit=Number(row.querySelector('.manual-price').value);const product=products.find(p=>String(p.id)===productId);if(!product||!Number.isInteger(qty)||qty<1||!Number.isFinite(unit)||unit<0){notice('Confira os produtos, quantidades e preços dos itens.','error');return;}items.push({name:product.name,qty,unit_price:Number(unit.toFixed(2)),notes:row.querySelector('.manual-note').value.trim(),cream:'',crust:'',half:false});}
+ const rows=[...$('manualPizzaItems').children,...$('manualDrinkItems').children];const items=[];
+ for(const row of rows){const id=row.querySelector('.manual-product').value,qty=Number(row.querySelector('.manual-qty').value),unit=Number(row.querySelector('.manual-price').value),product=products.find(p=>String(p.id)===id),drink=row.parentElement.id==='manualDrinkItems',half=!drink&&row.querySelector('.manual-pizza-mode').value==='half',secondId=half?row.querySelector('.manual-second-product').value:'',second=secondId?products.find(p=>String(p.id)===secondId):null;if(!product||!Number.isInteger(qty)||qty<1||!Number.isFinite(unit)||unit<0||(half&&(!second||String(second.id)===String(product.id)))){notice('Confira os sabores, bebidas, quantidades e preços dos itens.','error');return;}items.push({name:half?product.name+' / '+second.name:product.name,qty,unit_price:Number(unit.toFixed(2)),notes:row.querySelector('.manual-note').value.trim(),cream:'',crust:'',half});}
  if(!items.length){notice('Adicione pelo menos um item ao pedido.','error');return;}
  const fulfillment=$('manualFulfillment').value,payment=$('manualPayment').value,subtotal=items.reduce((sum,item)=>sum+item.qty*item.unit_price,0),deliveryFee=fulfillment==='delivery'?manualDeliveryFee():0;
  const whatsapp=$('manualWhatsapp').value.replace(/\D/g,'');if(whatsapp&& !/^[0-9]{10,15}$/.test(whatsapp)){notice('Confira o WhatsApp: informe DDD e número, apenas números.','error');return;}
  const payload={id:crypto.randomUUID(),customer_name:$('manualCustomer').value.trim(),customer_whatsapp:whatsapp,fulfillment,street:fulfillment==='delivery' ? $('manualStreet').value.trim():'',street_number:fulfillment==='delivery' ? $('manualNumber').value.trim():'',district:fulfillment==='delivery' ? $('manualDistrict').value.trim():'',reference:fulfillment==='delivery' ? $('manualReference').value.trim():'',payment,change_for:payment==='Dinheiro' ? $('manualChange').value.trim():'',items,subtotal:Number(subtotal.toFixed(2)),delivery_fee:Number(deliveryFee.toFixed(2)),status:'received'};
  button.disabled=true;button.textContent='Registrando...';
- try{const result=requireOk(await sb.from('orders').insert(payload).select('id'));if(!result?.length)throw Error('O pedido não foi confirmado pelo banco de dados.');notice('Pedido manual registrado com sucesso!','success');manualOrderForm.reset();$('manualItems').replaceChildren();manualOrderForm.classList.add('hidden');await loadOrdersAfterSave();}
+ try{const result=requireOk(await sb.from('orders').insert(payload).select('id'));if(!result?.length)throw Error('O pedido não foi confirmado pelo banco de dados.');notice('Pedido manual registrado com sucesso!','success');manualOrderForm.reset();$('manualPizzaItems').replaceChildren();$('manualDrinkItems').replaceChildren();manualOrderForm.classList.add('hidden');await loadOrdersAfterSave();}
  catch(err){fail(err);}finally{button.disabled=false;button.textContent='Registrar pedido';}
 });
 
