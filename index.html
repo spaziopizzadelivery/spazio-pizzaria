@@ -66,6 +66,7 @@ html,body{background:#090909;color:var(--ink)}
 /* Janela de escolha do sabor da pizza */
 .pizza-flavor-list{display:flex;flex-direction:column;gap:10px}
 .pizza-flavor-pick{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px;border:1px solid #493d32;border-radius:12px;background:#1e1a16}
+.pizza-flavor-pick.selected{border-color:#e8c590;background:#2b2016;box-shadow:0 0 0 1px #e8c59044}
 .pizza-flavor-info{display:flex;flex-direction:column;gap:4px;min-width:0}
 .pizza-flavor-info strong{color:#f3d19a;font-size:15px}
 .pizza-flavor-info span{color:#c4b9ae;font-size:12px;line-height:1.4}
@@ -288,20 +289,34 @@ function openProduct(product){
   $('#modalTitle').textContent=product.name+' · Sabores';body.replaceChildren();foot.replaceChildren();
   body.append(el('p','',product.description),el('span','field','1 de 3 · Escolha os sabores'));
   const choices=el('div','');choices.append(labelledRadio('kind','whole','Um sabor · '+format(pizzaPrice(product)),!half),labelledRadio('kind','half','Meio a meio · dois sabores',half));body.append(choices);
-  const secondWrap=el('div',half?'':'hidden');secondWrap.append(el('label','field','Escolha o segundo sabor'));
-  const select=el('select','entry');select.id='secondFlavor';
-  for(const p of PRODUCTS.filter(x=>x.id!==product.id&&x.category!=='Bebidas')){const op=el('option','',p.name+' · '+format(p.price));op.value=p.id;select.append(op)}
-  if(second)select.value=String(second.id);else second=PRODUCTS.find(p=>p.id===Number(select.value));
-  secondWrap.append(select,el('p','note','No meio a meio, o preço base corresponde ao sabor mais caro.'));body.append(secondWrap);
-  choices.addEventListener('change',()=>{half=body.querySelector('input[name="kind"]:checked').value==='half';secondWrap.classList.toggle('hidden',!half)});
-  select.addEventListener('change',()=>{second=PRODUCTS.find(p=>p.id===Number(select.value))});
+  choices.addEventListener('change',()=>{
+   half=body.querySelector('input[name="kind"]:checked').value==='half';
+   if(!half)second=null;
+   renderFlavorStep();
+  });
+  if(half){
+   body.append(el('label','field','Escolha o segundo sabor'));
+   const list=el('div','pizza-flavor-list');
+   for(const p of PRODUCTS.filter(x=>x.id!==product.id&&x.category!=='Bebidas')){
+    const row=el('div','pizza-flavor-pick'+(second?.id===p.id?' selected':''));
+    const info=el('div','pizza-flavor-info');
+    info.append(el('strong','',p.name),el('span','',p.description||''));
+    const action=el('div','pizza-flavor-action');
+    action.append(el('b','',format(pizzaPrice(p))));
+    const choose=el('button','add',second?.id===p.id?'Selecionado':'Escolher');
+    choose.type='button';
+    choose.addEventListener('click',()=>{second=p;renderFlavorStep()});
+    action.append(choose);row.append(info,action);list.append(row);
+   }
+   body.append(list,el('p','note','No meio a meio, o preço base corresponde ao sabor mais caro.'));
+  }
   if(product.name==='Frango Bacon + Catupiry ou Cheddar'){
    body.append(el('label','field','Escolha o creme deste sabor'));
    const wrap=el('div','');wrap.append(labelledRadio('cream','Catupiry','Catupiry',cream!=='Cheddar'),labelledRadio('cream','Cheddar','Cheddar',cream==='Cheddar'));body.append(wrap);
    wrap.addEventListener('change',()=>{cream=body.querySelector('input[name="cream"]:checked').value});
    if(!cream)cream='Catupiry';
   }
-  const next=el('button','primary','Continuar · Escolher massa e borda →');next.type='button';next.addEventListener('click',renderCrustStep);foot.append(next);
+  const next=el('button','primary','Continuar · Escolher massa e borda →');next.type='button';next.disabled=half&&!second;next.addEventListener('click',renderCrustStep);foot.append(next);
  }
  function renderExtrasStep(){
   $('#modalTitle').textContent=product.name+' · Adicionais';body.replaceChildren();foot.replaceChildren();
