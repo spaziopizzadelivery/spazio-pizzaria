@@ -97,7 +97,7 @@ html,body{background:#090909;color:var(--ink)}
 <header class="brandbar"><div class="shell"><a class="brand" href="#inicio"><img class="brand-symbol" src="logo-simbolo.jpg" alt="Símbolo Spazio Pizza"><img class="brand-wordmark" src="logo-wordmark.jpg" alt="Spazio Pizza Delivery"></a><button class="top-cart" type="button" id="headerCart">🛒 Carrinho <span id="headerCount">(0)</span></button></div></header>
 <section class="hero" id="inicio"><div class="shell"><div><span class="eyebrow">✦ Seu próximo momento delicioso</span><h2>O sabor certo para <em>cada momento.</em></h2><p>Escolha seus sabores favoritos, personalize a pizza e monte seu pedido com calma. Na hora de finalizar, enviamos tudo organizado pelo WhatsApp.</p></div><div class="hero-mark" aria-hidden="true">🍕</div></div></section>
 <div class="shell"><div id="openingStatus" class="status" style="color:#675347;padding:10px 0" aria-live="polite"></div></div>
-<nav class="sticky" aria-label="Filtros do cardápio"><div class="shell toolbar"><input id="search" class="search" type="search" placeholder="🔎 Buscar sabor ou ingrediente..." aria-label="Buscar pizza"><div class="pills" id="filters"><button class="pill active" data-category="Todos">Todos</button><button class="pill" data-category="Tradicionais">Tradicionais</button><button class="pill" data-category="Especiais">Especiais</button><button class="pill" data-category="Bebidas">🥤 Bebidas</button><button class="pill" data-category="Promoções" id="promoFilter" hidden>🎁 Promoções</button></div></div></nav>
+<nav class="sticky" aria-label="Filtros do cardápio"><div class="shell toolbar"><input id="search" class="search" type="search" placeholder="🔎 Buscar sabor ou ingrediente..." aria-label="Buscar pizza"><div class="pills" id="filters"><button class="pill active" data-category="Pizzas">🍕 Pizzas</button><button class="pill" data-category="Bebidas">🥤 Bebidas</button><button class="pill" data-category="Promoções" id="promoFilter" hidden>🎁 Promoções</button></div></div></nav>
 <main class="shell content"><div id="promoBanner" class="promo-banner" hidden><strong>🎁 Terça da Borda Grátis!</strong>Hoje, qualquer pizza ganha borda recheada de cortesia: Catupiry, Cheddar, Cream Cheese ou Chocolate.</div><div class="section-header"><div><h3 id="sectionTitle">Nosso cardápio</h3><p>Escolha sua pizza e adicione ao carrinho.</p></div><span class="count" id="count"></span></div><div id="catalog" class="cards"></div><div id="empty" class="empty" hidden>Nenhum sabor encontrado. Experimente outra busca.</div></main>
 <section class="store-info shell" id="storeInfo" aria-labelledby="storeInfoTitle">
   <div class="store-info-heading"><span class="eyebrow">✦ Muito além de uma pizza</span><h3 id="storeInfoTitle">Conheça a <em>Spazio</em></h3><p>Confira nossos horários, formas de receber seu pedido e canais de atendimento.</p></div>
@@ -130,15 +130,15 @@ function updateStoreStatus(){const state=isOpen();$('#openingStatus').textConten
 let HALF_PRICE_RULE='highest';
 const format=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
 const $=s=>document.querySelector(s);
-let category='Todos',cart=[],selectedProduct=null,qty=1,lastFocus=null;
-let selectedPizzaSize='large';
+let category='Pizzas',cart=[],selectedProduct=null,qty=1,lastFocus=null;
+let selectedPizzaSize=null;
 function pizzaPrice(p){return Number((Number(p.price)*(selectedPizzaSize==='small'?0.6:1)).toFixed(2))}
 // Promoção válida às terças-feiras, no horário de Brasília.
 let PROMO_ENABLED=true;
 function isPromoDay(){return PROMO_ENABLED&&new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'long'}).format(new Date())==='Tuesday'}
 function effectiveCrustPrice(item){return item.crustId&&item.crustId!=='traditional'&&!isPromoDay()?(Number(item.crustPrice)||0):0}
 function itemUnit(item){return item.basePrice!==undefined?item.basePrice+effectiveCrustPrice(item)+(Number(item.extrasPrice)||0):item.unit}
-function refreshPromo(){const active=isPromoDay();$('#promoFilter').hidden=!active;if(!active&&category==='Promoções'){category='Todos';document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Todos'))}return active}
+function refreshPromo(){const active=isPromoDay();$('#promoFilter').hidden=!active;if(!active&&category==='Promoções'){category='Pizzas';selectedPizzaSize=null;document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Pizzas'))}return active}
 
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
 
@@ -161,13 +161,13 @@ function beverageImage(product){
 }
 function renderCatalog(){updateStoreStatus();
  const promo=refreshPromo();const q=$('#search').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
- const data=category==='Promoções'?[]:PRODUCTS.filter(p=>(category==='Todos'||p.category===category)&&(`${p.name} ${p.description}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q)));
- $('#catalog').replaceChildren();$('#count').textContent=category==='Promoções'?'Toda terça-feira':data.length+(category==='Bebidas'?' bebidas':' produtos');$('#sectionTitle').textContent=category==='Todos'?'Nosso cardápio':category;$('#empty').hidden=category==='Promoções'||data.length>0;
- if(category==='Todos'||category==='Tradicionais'||category==='Especiais'||category==='Pizzas'){
+ const isPizzaCategory=category==='Pizzas';
+ const data=category==='Promoções'?[]:PRODUCTS.filter(p=>(isPizzaCategory?p.category!=='Bebidas':category==='Bebidas'?p.category==='Bebidas':false)&&(`${p.name} ${p.description}`.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(q)));
+ $('#catalog').replaceChildren();$('#count').textContent=category==='Promoções'?'Toda terça-feira':data.length+(category==='Bebidas'?' bebidas':isPizzaCategory?' sabores':' produtos');$('#sectionTitle').textContent=category==='Pizzas'?'Pizzas':category==='Bebidas'?'Bebidas':category;$('#empty').hidden=category==='Promoções'||(isPizzaCategory&&!selectedPizzaSize)||data.length>0;
+ if(isPizzaCategory){
   const pizzas=PRODUCTS.filter(p=>p.category!=='Bebidas');
   if(pizzas.length){
    const cheapest=Math.min(...pizzas.map(p=>Number(p.price)));
-   const pizzaHeading=el('div','catalog-group-heading');const pizzaHeadingText=el('div','catalog-group-title');pizzaHeadingText.append(el('span','catalog-group-icon','🍕'),el('h4','','Pizzas'));const pizzaLine=el('div','catalog-group-line');pizzaLine.setAttribute('aria-hidden','true');pizzaHeading.append(pizzaHeadingText,pizzaLine);$('#catalog').append(pizzaHeading);
    const chooser=el('div','pizza-size-chooser');
    const large=el('button','pizza-size-card'+(selectedPizzaSize==='large'?' selected':''),'');
    large.type='button';large.innerHTML='<strong>🍕 Pizza Grande</strong><span>35 cm · 8 fatias</span><b>A partir de '+format(cheapest)+'</b>';
@@ -175,15 +175,15 @@ function renderCatalog(){updateStoreStatus();
    small.type='button';small.innerHTML='<strong>🍕 Pizza Pequena</strong><span>25 cm · 4 fatias</span><b>A partir de '+format(cheapest*.6)+'</b>';
    large.onclick=()=>{selectedPizzaSize='large';renderCatalog()};
    small.onclick=()=>{selectedPizzaSize='small';renderCatalog()};
-   chooser.append(large,small);$('#catalog').append(chooser);
+   $('#catalog').append(chooser);chooser.append(large,small);
+   if(!selectedPizzaSize){$('#count').textContent='Escolha o tamanho da pizza';return}
+   const heading=el('div','catalog-group-heading');const headingText=el('div','catalog-group-title');headingText.append(el('span','catalog-group-icon','🍕'),el('h4','',selectedPizzaSize==='small'?'Pizza Pequena · 25 cm':'Pizza Grande · 35 cm'));const line=el('div','catalog-group-line');line.setAttribute('aria-hidden','true');heading.append(headingText,line);$('#catalog').append(heading);
   }
  }
  if(category==='Promoções'&&promo){
-  const card=el('article','card'),copy=el('div','card-copy');copy.append(el('div','chip','🎁 Terça da borda grátis'),el('h4','','Borda recheada de cortesia'),el('p','','Toda terça-feira, escolha qualquer pizza e ganhe uma borda recheada de Catupiry, Cheddar, Cream Cheese ou Chocolate, sem pagar os R$ 15,00 adicionais. A cortesia é aplicada automaticamente ao personalizar sua pizza.'));const btn=el('button','add','Escolher minha pizza →');btn.onclick=()=>{category='Todos';document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Todos'));renderCatalog()};copy.append(btn);card.append(copy);$('#catalog').append(card);return;
+  const card=el('article','card'),copy=el('div','card-copy');copy.append(el('div','chip','🎁 Terça da borda grátis'),el('h4','','Borda recheada de cortesia'),el('p','','Toda terça-feira, escolha qualquer pizza e ganhe uma borda recheada de Catupiry, Cheddar, Cream Cheese ou Chocolate, sem pagar os R$ 15,00 adicionais. A cortesia é aplicada automaticamente ao personalizar sua pizza.'));const btn=el('button','add','Escolher minha pizza →');btn.onclick=()=>{category='Pizzas';selectedPizzaSize=null;document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x.dataset.category==='Pizzas'));renderCatalog()};copy.append(btn);card.append(copy);$('#catalog').append(card);return;
  }
- let previousGroup=(category==='Todos'||category==='Tradicionais'||category==='Especiais'||category==='Pizzas')?'Pizzas':'';
- const groupName=p=>p.category==='Bebidas'?'Bebidas':(['Tradicionais','Especiais','Pizzas'].includes(p.category)?'Pizzas':p.category||'Outros');
- data.forEach(p=>{const currentGroup=groupName(p);if(category==='Todos'&&currentGroup!==previousGroup){const heading=el('div','catalog-group-heading');const headingText=el('div','catalog-group-title');const symbol=el('span','catalog-group-icon',currentGroup==='Pizzas'?'🍕':currentGroup==='Bebidas'?'🥤':'✦');const name=el('h4','',currentGroup);headingText.append(symbol,name);const line=el('div','catalog-group-line');line.setAttribute('aria-hidden','true');heading.append(headingText,line);$('#catalog').append(heading)}previousGroup=currentGroup;const card=el('article','card'),copy=el('div','card-copy'),chip=el('div','chip',p.category),title=el('h4','',p.name),desc=el('p','',p.description),bottom=el('div','card-bottom'),price=el('div','price');price.append(el('small','',p.category==='Bebidas'?'Preço':'A partir de'),el('strong','',format(p.category==='Bebidas'?p.price:pizzaPrice(p))));const btn=el('button','add','Adicionar +');btn.type='button';btn.addEventListener('click',()=>p.category==='Bebidas'?openBeverage(p):openProduct(p));bottom.append(price,btn);copy.append(chip,title,desc,bottom);const art=el('div','card-art'),pizza=el('span','',p.category==='Bebidas'?'🥤':p.category==='Especiais'?'🌟':'🍕');art.setAttribute('aria-hidden','true');if(p.image_url){const photo=document.createElement('img');photo.src=p.image_url;photo.alt='Foto de '+p.name;photo.loading='lazy';photo.decoding='async';photo.style.cssText='width:100%;height:100%;object-fit:cover';pizza.hidden=true;photo.onerror=()=>{photo.remove();pizza.hidden=false};art.append(photo)}art.append(pizza);card.append(copy,art);$('#catalog').append(card)})
+ data.forEach(p=>{const card=el('article','card'),copy=el('div','card-copy'),chip=el('div','chip',p.category),title=el('h4','',p.name),desc=el('p','',p.description),bottom=el('div','card-bottom'),price=el('div','price');price.append(el('small','',p.category==='Bebidas'?'Preço':'A partir de'),el('strong','',format(p.category==='Bebidas'?p.price:pizzaPrice(p))));const btn=el('button','add','Adicionar +');btn.type='button';btn.addEventListener('click',()=>p.category==='Bebidas'?openBeverage(p):openProduct(p));bottom.append(price,btn);copy.append(chip,title,desc,bottom);const art=el('div','card-art'),pizza=el('span','',p.category==='Bebidas'?'🥤':p.category==='Especiais'?'🌟':'🍕');art.setAttribute('aria-hidden','true');if(p.image_url){const photo=document.createElement('img');photo.src=p.image_url;photo.alt='Foto de '+p.name;photo.loading='lazy';photo.decoding='async';photo.style.cssText='width:100%;height:100%;object-fit:cover';pizza.hidden=true;photo.onerror=()=>{photo.remove();pizza.hidden=false};art.append(photo)}art.append(pizza);card.append(copy,art);$('#catalog').append(card)})
 }
 $('#search').addEventListener('input',renderCatalog);$('#filters').addEventListener('click',e=>{const b=e.target.closest('[data-category]');if(!b)return;category=b.dataset.category;document.querySelectorAll('.pill').forEach(x=>x.classList.toggle('active',x===b));renderCatalog()});
 function showModal(title){lastFocus=document.activeElement;$('#modalTitle').textContent=title;$('#overlay').hidden=false;document.body.style.overflow='hidden';$('#closeModal').focus()}
