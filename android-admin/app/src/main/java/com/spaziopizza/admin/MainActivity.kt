@@ -6,6 +6,10 @@ import android.os.Build
 import android.app.Activity
 import com.google.firebase.messaging.FirebaseMessaging
 import android.os.Bundle
+import android.graphics.Color
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -23,8 +27,20 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
         }
+        // Respeita as áreas reservadas pelo Android (barra de status e navegação).
+        // O target SDK 35 usa edge-to-edge por padrão; sem os insets, o conteúdo
+        // do WebView fica por trás do relógio, bateria e ícones do sistema.
+        window.statusBarColor = Color.rgb(26, 21, 17)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         webView = WebView(this)
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
+            val systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
         setContentView(webView)
+        ViewCompat.requestApplyInsets(webView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.allowFileAccess = false
