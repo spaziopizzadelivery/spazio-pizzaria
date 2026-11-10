@@ -276,7 +276,10 @@ function openProduct(product){
  function renderExtrasStep(){
   $('#modalTitle').textContent=product.name+' · Adicionais';body.replaceChildren();foot.replaceChildren();
   body.append(el('span','field','3 de 4 · ADICIONAIS (Pizza Inteira)'));
-  if(half){
+  if(selectedPizzaSize==='small'){
+   selectedExtras=[];
+   body.append(el('p','','A pizza pequena não permite adicionais. Ela é preparada somente na versão tradicional.'));
+  }else if(half){
    body.append(el('p','','Os adicionais são disponíveis somente para pizzas inteiras. Como você escolheu meio a meio, pode continuar para as bebidas.'));
   }else{
    body.append(el('p','','Escolha quantos adicionais quiser. Cada categoria selecionada será acrescentada uma vez ao preço da pizza.'));
@@ -299,9 +302,16 @@ function openProduct(product){
  function renderCrustStep(){
   $('#modalTitle').textContent=product.name+' · Massa e borda';body.replaceChildren();foot.replaceChildren();
   body.append(el('span','field','2 de 4 · Escolha a massa ou borda'));
-  body.append(el('p','',isPromoDay()?'🎁 Promoção de terça-feira: qualquer borda recheada é cortesia!':'Escolha uma opção. Confira os valores de cada borda abaixo.'));
+  const smallPizza=selectedPizzaSize==='small';
+  if(smallPizza){
+   crust=CRUST_OPTIONS[0];
+   body.append(el('p','','Pizza pequena: disponível somente com massa tradicional, sem borda recheada.'));
+  }else{
+   body.append(el('p','',isPromoDay()?'🎁 Promoção de terça-feira: qualquer borda recheada é cortesia!':'Escolha uma opção. Confira os valores de cada borda abaixo.'));
+  }
   const options=el('div','');
-  for(const option of CRUST_OPTIONS){options.append(labelledRadio('crust',option.id,option.label+' · '+(option.price?(isPromoDay()?'GRÁTIS hoje':'+ '+format(option.price)):'Sem acréscimo'),crust.id===option.id))}
+  const availableCrusts=smallPizza?CRUST_OPTIONS.filter(x=>x.id==='traditional'):CRUST_OPTIONS;
+  for(const option of availableCrusts){options.append(labelledRadio('crust',option.id,option.label+' · '+(option.price?(isPromoDay()?'GRÁTIS hoje':'+ '+format(option.price)):'Sem acréscimo'),crust.id===option.id))}
   body.append(options);
   options.addEventListener('change',()=>{crust=CRUST_OPTIONS.find(x=>x.id===body.querySelector('input[name="crust"]:checked').value);renderFoot()});
   body.append(el('label','field','Observações (opcional)'));
