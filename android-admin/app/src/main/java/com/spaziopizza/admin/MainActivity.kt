@@ -48,6 +48,7 @@ class MainActivity : Activity() {
 
         val safeArea = FrameLayout(this).apply {
             // A cor do contêiner também preenche as áreas das barras do sistema.
+            // Build de distribuição após ajuste visual das barras do sistema.
             setBackgroundColor(systemBarColor)
         }
         webView = WebView(this)
