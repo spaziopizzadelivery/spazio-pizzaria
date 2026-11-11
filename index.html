@@ -202,6 +202,27 @@ html,body{background:#090909;color:var(--ink)}
   .brand-meta button{font-size:inherit}
 }
 
+
+/* Centraliza a localização em relação à página inteira */
+.brandbar .shell{position:relative}
+.brand-stack{flex:0 1 auto;align-items:flex-start}
+.brand-meta{
+  position:absolute;
+  left:50%;
+  bottom:7px;
+  transform:translate(-50%,4px);
+  width:max-content;
+  max-width:calc(100% - 32px);
+  justify-content:center;
+  white-space:nowrap;
+  margin:0;
+  padding:0;
+}
+@media(max-width:520px){
+  .brandbar .shell{min-height:112px}
+  .brand-meta{font-size:10px;gap:5px}
+}
+
 </style>
 </head>
 <body>
