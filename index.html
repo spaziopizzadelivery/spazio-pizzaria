@@ -101,13 +101,84 @@ html,body{background:#090909;color:var(--ink)}
 .catalog-group-icon{font-size:1.55rem}
 .catalog-group-line{height:2px;flex:1;background:linear-gradient(90deg,rgba(232,181,105,.6),transparent)}
 @media(max-width:600px){.catalog-group-heading{gap:12px;margin:26px 0 4px;padding:10px 0}.catalog-group-title{gap:8px}}
-\n/* Identidade e informações rápidas */\n.banner{font-family:"Orbitron", "Trebuchet MS", sans-serif;font-size:13px;font-weight:700;letter-spacing:.09em;text-shadow:0 0 14px #e8c59055;padding:11px 16px}\n\n.brandbar .shell{align-items:center}\n.brand-stack{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}\n.brand-meta{font-size:12px;color:#d7c5b3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:2px}\n.brand-meta button{border:0;background:none;padding:0;color:#e8c590;text-decoration:underline;text-underline-offset:3px;font-weight:800;cursor:pointer}\n.status{font-size:13px;font-weight:800;letter-spacing:.02em}\n.status.is-open{color:#42d477!important}\n.status.is-closed{color:#ef7770!important}\n.info-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 20px 0}\n.info-tab{border:1px solid #594531;border-radius:10px;padding:12px 6px;background:#211a15;color:#d9c6b1;font-weight:850;font-size:12px;letter-spacing:.04em}\n.info-tab.active{background:#e8c590;color:#21160f;border-color:#e8c590}\n.info-content{min-height:190px;line-height:1.7}\n.info-content p{margin:0 0 13px}\n.info-contact{display:flex;flex-direction:column;gap:12px;margin-top:18px}\n.info-contact a{color:#e8c590;text-decoration:none;font-weight:750}\n.info-contact a:hover{text-decoration:underline}\n.info-hours{padding:14px;border:1px solid #493d32;border-radius:12px;background:#211a15;margin:8px 0}\n.info-hours strong{color:#e8c590}\n@media(max-width:520px){.brandbar .shell{gap:8px}.brand-meta{font-size:10px;gap:4px}.brand-symbol{width:48px;height:46px}.brand-wordmark{width:130px;max-height:52px}.top-cart{font-size:11px;padding:9px 10px}.banner{font-size:11px}}\n</style>
+\n/* Identidade e informações rápidas */\n.banner{font-family:"Orbitron", "Trebuchet MS", sans-serif;font-size:13px;font-weight:700;letter-spacing:.09em;text-shadow:0 0 14px #e8c59055;padding:11px 16px}\n\n.brandbar .shell{align-items:center}\n.brand-stack{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}\n.brand-meta{font-size:12px;color:#d7c5b3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:2px}\n.brand-meta button{border:0;background:none;padding:0;color:#e8c590;text-decoration:underline;text-underline-offset:3px;font-weight:800;cursor:pointer}\n.status{font-size:13px;font-weight:800;letter-spacing:.02em}\n.status.is-open{color:#42d477!important}\n.status.is-closed{color:#ef7770!important}\n.info-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 20px 0}\n.info-tab{border:1px solid #594531;border-radius:10px;padding:12px 6px;background:#211a15;color:#d9c6b1;font-weight:850;font-size:12px;letter-spacing:.04em}\n.info-tab.active{background:#e8c590;color:#21160f;border-color:#e8c590}\n.info-content{min-height:190px;line-height:1.7}\n.info-content p{margin:0 0 13px}\n.info-contact{display:flex;flex-direction:column;gap:12px;margin-top:18px}\n.info-contact a{color:#e8c590;text-decoration:none;font-weight:750}\n.info-contact a:hover{text-decoration:underline}\n.info-hours{padding:14px;border:1px solid #493d32;border-radius:12px;background:#211a15;margin:8px 0}\n.info-hours strong{color:#e8c590}\n@media(max-width:520px){.brandbar .shell{gap:8px}.brand-meta{font-size:10px;gap:4px}.brand-symbol{width:48px;height:46px}.brand-wordmark{width:130px;max-height:52px}.top-cart{font-size:11px;padding:9px 10px}.banner{font-size:11px}}\n
+/* Refinamento visual da identidade, status e janela de informações */
+.banner{
+  background:linear-gradient(90deg,#0b0908,#21170f 50%,#0b0908);
+  color:#f2d5a7;
+  border-bottom:1px solid #493521;
+  font-family:"Orbitron","Trebuchet MS",sans-serif;
+  font-size:clamp(11px,1.3vw,13px);
+  font-weight:700;
+  letter-spacing:.11em;
+  text-shadow:0 2px 12px #e8c59066;
+  padding:13px 16px;
+}
+.brandbar{background:linear-gradient(115deg,#17110d,#211811 65%,#120e0b);border-bottom:1px solid #4a3625}
+.brandbar .shell{min-height:112px;align-items:center}
+.brand-stack{gap:8px}
+.brand{gap:13px}
+.brand-symbol{width:70px;height:65px}
+.brand-wordmark{width:178px;max-height:70px}
+.brand-meta{font-size:12px;letter-spacing:.025em;color:#cdbba8;gap:7px;padding-left:3px}
+.brand-meta button{font-size:12px;color:#f0c987;text-decoration:none;border-bottom:1px solid #b98c52;padding:2px 0;transition:color .2s,border-color .2s}
+.brand-meta button:hover{color:#fff0d6;border-color:#fff0d6}
+.top-cart{background:linear-gradient(135deg,#3a281b,#241810);border-color:#896642;box-shadow:0 4px 14px #0004;transition:transform .2s,background .2s}
+.top-cart:hover{transform:translateY(-1px);background:#49301e}
+.status-wrap{background:#0e0d0c;border-bottom:1px solid #2e251d;padding:11px 0}
+.status-wrap .shell{display:flex;justify-content:center}
+.status{
+  display:inline-flex;align-items:center;gap:9px;
+  width:max-content;max-width:100%;
+  padding:9px 15px;border:1px solid #275d3a;border-radius:999px;
+  background:linear-gradient(180deg,#10251a,#0c1a12);
+  color:#5bea8b!important;
+  font-size:12px;font-weight:800;letter-spacing:.025em;
+  box-shadow:0 0 18px #20c45a14,inset 0 1px #ffffff0b;
+}
+.status::before{content:"";width:7px;height:7px;flex:none;border-radius:50%;background:#38e878;box-shadow:0 0 0 4px #38e87820,0 0 10px #38e87899}
+.status.is-closed{color:#ffaaa3!important;border-color:#67332e;background:linear-gradient(180deg,#2b1715,#1c100f);box-shadow:none}
+.status.is-closed::before{background:#ed7168;box-shadow:0 0 0 4px #ed716820}
+.info-modal{border:1px solid #70563b;background:linear-gradient(160deg,#1c1814,#121110);box-shadow:0 28px 90px #000b}
+.info-modal .modal-head{padding:24px 25px 17px;background:linear-gradient(110deg,#241a12,#171310);border-bottom:1px solid #493725}
+.info-modal .modal-head h3{font-size:26px;letter-spacing:-.02em;color:#f6e6d0}
+.info-tabs{padding:16px 22px 0;gap:9px}
+.info-tab{padding:13px 8px;border-radius:11px;background:#211b16;border:1px solid #51402f;color:#d4c1aa;font-size:11px;letter-spacing:.09em;transition:all .2s}
+.info-tab:hover{border-color:#c49a63;color:#f7e4c8}
+.info-tab.active{background:linear-gradient(135deg,#f0d09e,#c99b60);border-color:#f0d09e;color:#24180e;box-shadow:0 4px 14px #d0a66a2b}
+.info-content{padding:23px 25px 27px;min-height:210px;color:#e8ddd0;font-size:14px;line-height:1.8}
+.info-content p{margin:0 0 14px}
+.info-contact{gap:10px;margin-top:20px}
+.info-contact a{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid #4c3a29;border-radius:12px;background:#211a14;color:#f0cd98;font-size:13px;transition:background .2s,border-color .2s}
+.info-contact a:hover{background:#2d2117;border-color:#a77b49;text-decoration:none}
+.info-hours{padding:18px;border:1px solid #4c3a29;border-radius:13px;background:linear-gradient(135deg,#251d16,#191512);margin:0}
+.info-hours p{margin:0 0 6px}
+.info-hours strong{display:block;font-size:19px;letter-spacing:.02em;color:#f1cd96;margin:5px 0 12px}
+.info-hours .store-info-muted{font-size:12px;color:#b5a797!important;margin:0}
+@media(max-width:520px){
+ .brandbar .shell{min-height:94px;gap:8px}
+ .brand-stack{gap:6px}
+ .brand{gap:8px}
+ .brand-symbol{width:52px;height:49px}
+ .brand-wordmark{width:135px;max-height:53px}
+ .brand-meta{font-size:10px;gap:5px}
+ .brand-meta button{font-size:10px}
+ .top-cart{font-size:11px;padding:10px 11px}
+ .status-wrap{padding:9px 0}
+ .status{font-size:11px;padding:8px 13px}
+ .info-modal .modal-head{padding:20px 19px 15px}
+ .info-tabs{padding:14px 14px 0;gap:6px}
+ .info-tab{font-size:10px;padding:12px 4px}
+ .info-content{padding:20px 19px 23px;font-size:13px}
+}
+
+</style>
 </head>
 <body>
 <div class="banner">De oooutro planeta! 🚀🍕</div>
 <header class="brandbar"><div class="shell"><div class="brand-stack"><a class="brand" href="#inicio"><img class="brand-symbol" src="logo-simbolo.jpg" alt="Símbolo Spazio Pizza"><img class="brand-wordmark" src="logo-wordmark.jpg" alt="Spazio Pizza Delivery"></a><div class="brand-meta">📍 São Lourenço - MG <span aria-hidden="true">|</span> <button type="button" id="moreInfo">Mais informações</button></div></div><button class="top-cart" type="button" id="headerCart">🛒 Carrinho <span id="headerCount">(0)</span></button></div></header>
 <section class="hero" id="inicio"><div class="shell"><div><p>Escolha seus sabores favoritos, personalize a pizza e monte seu pedido com calma. Na hora de finalizar, enviamos tudo organizado pelo WhatsApp.</p></div><div class="hero-mark" aria-hidden="true">🍕</div></div></section>
-<div class="shell"><div id="openingStatus" class="status" style="color:#675347;padding:10px 0" aria-live="polite"></div></div>
+<div class="status-wrap"><div class="shell"><div id="openingStatus" class="status" aria-live="polite"></div></div></div>
 <nav class="sticky" aria-label="Filtros do cardápio"><div class="shell toolbar"><input id="search" class="search" type="search" placeholder="🔎 Buscar sabor ou ingrediente..." aria-label="Buscar pizza"><div id="filters" hidden><button id="promoFilter" hidden></button></div></div></nav>
 <main class="shell content"><div id="promoBanner" class="promo-banner" hidden><strong>🎁 Terça da Borda Grátis!</strong>Hoje, qualquer pizza ganha borda recheada de cortesia: Catupiry, Cheddar, Cream Cheese ou Chocolate.</div><div class="section-header"><div><h3 id="sectionTitle">Nosso cardápio</h3><p>Escolha sua pizza e adicione ao carrinho.</p></div><span class="count" id="count"></span></div><div id="catalog" class="cards"></div><div id="empty" class="empty" hidden>Nenhum sabor encontrado. Experimente outra busca.</div></main>
 <footer class="footer"><div class="shell"><div><h4>Spazio Pizza Delivery</h4><p>Sabores especiais para acompanhar seus melhores momentos.</p></div><div><p>WhatsApp: <a href="https://wa.me/5535988866999" target="_blank" rel="noopener">(35) 98886-6999</a></p><p>Instagram: @spaziopizzasl</p><p>Os preços informados são os do cardápio fornecido.</p></div></div></footer>
