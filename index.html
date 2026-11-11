@@ -100,27 +100,18 @@ html,body{background:#090909;color:var(--ink)}
 .catalog-group-icon{font-size:1.55rem}
 .catalog-group-line{height:2px;flex:1;background:linear-gradient(90deg,rgba(232,181,105,.6),transparent)}
 @media(max-width:600px){.catalog-group-heading{gap:12px;margin:26px 0 4px;padding:10px 0}.catalog-group-title{gap:8px}}
-</style>
+\n/* Identidade e informações rápidas */\n.banner{font-family:"Orbitron", "Trebuchet MS", sans-serif;font-size:13px;font-weight:700;letter-spacing:.09em;text-shadow:0 0 14px #e8c59055;padding:11px 16px}\n@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&display=swap");\n.brandbar .shell{align-items:center}\n.brand-stack{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}\n.brand-meta{font-size:12px;color:#d7c5b3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:2px}\n.brand-meta button{border:0;background:none;padding:0;color:#e8c590;text-decoration:underline;text-underline-offset:3px;font-weight:800;cursor:pointer}\n.status{font-size:13px;font-weight:800;letter-spacing:.02em}\n.status.is-open{color:#42d477!important}\n.status.is-closed{color:#ef7770!important}\n.info-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px 20px 0}\n.info-tab{border:1px solid #594531;border-radius:10px;padding:12px 6px;background:#211a15;color:#d9c6b1;font-weight:850;font-size:12px;letter-spacing:.04em}\n.info-tab.active{background:#e8c590;color:#21160f;border-color:#e8c590}\n.info-content{min-height:190px;line-height:1.7}\n.info-content p{margin:0 0 13px}\n.info-contact{display:flex;flex-direction:column;gap:12px;margin-top:18px}\n.info-contact a{color:#e8c590;text-decoration:none;font-weight:750}\n.info-contact a:hover{text-decoration:underline}\n.info-hours{padding:14px;border:1px solid #493d32;border-radius:12px;background:#211a15;margin:8px 0}\n.info-hours strong{color:#e8c590}\n@media(max-width:520px){.brandbar .shell{gap:8px}.brand-meta{font-size:10px;gap:4px}.brand-symbol{width:48px;height:46px}.brand-wordmark{width:130px;max-height:52px}.top-cart{font-size:11px;padding:9px 10px}.banner{font-size:11px}}\n</style>
 </head>
 <body>
 <div class="banner">De oooutro planeta! 🚀🍕</div>
-<header class="brandbar"><div class="shell"><a class="brand" href="#inicio"><img class="brand-symbol" src="logo-simbolo.jpg" alt="Símbolo Spazio Pizza"><img class="brand-wordmark" src="logo-wordmark.jpg" alt="Spazio Pizza Delivery"></a><button class="top-cart" type="button" id="headerCart">🛒 Carrinho <span id="headerCount">(0)</span></button></div></header>
+<header class="brandbar"><div class="shell"><div class="brand-stack"><a class="brand" href="#inicio"><img class="brand-symbol" src="logo-simbolo.jpg" alt="Símbolo Spazio Pizza"><img class="brand-wordmark" src="logo-wordmark.jpg" alt="Spazio Pizza Delivery"></a><div class="brand-meta">📍 São Lourenço - MG <span aria-hidden="true">|</span> <button type="button" id="moreInfo">Mais informações</button></div></div><button class="top-cart" type="button" id="headerCart">🛒 Carrinho <span id="headerCount">(0)</span></button></div></header>
 <section class="hero" id="inicio"><div class="shell"><div><p>Escolha seus sabores favoritos, personalize a pizza e monte seu pedido com calma. Na hora de finalizar, enviamos tudo organizado pelo WhatsApp.</p></div><div class="hero-mark" aria-hidden="true">🍕</div></div></section>
 <div class="shell"><div id="openingStatus" class="status" style="color:#675347;padding:10px 0" aria-live="polite"></div></div>
 <nav class="sticky" aria-label="Filtros do cardápio"><div class="shell toolbar"><input id="search" class="search" type="search" placeholder="🔎 Buscar sabor ou ingrediente..." aria-label="Buscar pizza"><div id="filters" hidden><button id="promoFilter" hidden></button></div></div></nav>
 <main class="shell content"><div id="promoBanner" class="promo-banner" hidden><strong>🎁 Terça da Borda Grátis!</strong>Hoje, qualquer pizza ganha borda recheada de cortesia: Catupiry, Cheddar, Cream Cheese ou Chocolate.</div><div class="section-header"><div><h3 id="sectionTitle">Nosso cardápio</h3><p>Escolha sua pizza e adicione ao carrinho.</p></div><span class="count" id="count"></span></div><div id="catalog" class="cards"></div><div id="empty" class="empty" hidden>Nenhum sabor encontrado. Experimente outra busca.</div></main>
-<section class="store-info shell" id="storeInfo" aria-labelledby="storeInfoTitle">
-  <div class="store-info-heading"><span class="eyebrow">✦ Muito além de uma pizza</span><h3 id="storeInfoTitle">Conheça a <em>Spazio</em></h3><p>Confira nossos horários, formas de receber seu pedido e canais de atendimento.</p></div>
-  <div class="store-info-grid">
-    <article class="store-info-card"><span class="store-info-icon">◷</span><h4>Horário de funcionamento</h4><p><strong>Terça a domingo</strong><br>18h às 23h</p><p class="store-info-muted">Segunda-feira: fechado</p></article>
-    <article class="store-info-card"><span class="store-info-icon">⌖</span><h4>Entrega ou retirada</h4><p><strong>Delivery</strong><br>Taxa fixa de R$ 9,00</p><p class="store-info-muted">Retirada no local sem taxa.</p></article>
-    <article class="store-info-card"><span class="store-info-icon">▣</span><h4>Formas de pagamento</h4><p>Pix, dinheiro e cartões de crédito ou débito.</p></article>
-    <article class="store-info-card"><span class="store-info-icon">✉</span><h4>Fale com a gente</h4><p><a href="https://wa.me/5535988866999" target="_blank" rel="noopener">WhatsApp: (35) 98886-6999</a></p><p><a href="https://instagram.com/spaziopizzasl" target="_blank" rel="noopener">Instagram: @spaziopizzasl</a></p></article>
-  </div>
-</section>
 <footer class="footer"><div class="shell"><div><h4>Spazio Pizza Delivery</h4><p>Sabores especiais para acompanhar seus melhores momentos.</p></div><div><p>WhatsApp: <a href="https://wa.me/5535988866999" target="_blank" rel="noopener">(35) 98886-6999</a></p><p>Instagram: @spaziopizzasl</p><p>Os preços informados são os do cardápio fornecido.</p></div></div></footer>
 <div id="basketBar" class="basket-bar" hidden><span aria-hidden="true">🛒</span><div class="summary"><b id="basketLabel">0 itens</b><small id="basketValue">R$ 0,00</small></div><button id="barCart" type="button">Ver carrinho →</button></div>
-<div id="overlay" class="overlay" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><h3 id="modalTitle"></h3><button class="close" id="closeModal" aria-label="Fechar" type="button">×</button></div><div id="modalBody" class="modal-body"></div><div id="modalFoot" class="modal-foot"></div></section></div>
+<div id="overlay" class="overlay" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><h3 id="modalTitle"></h3><button class="close" id="closeModal" aria-label="Fechar" type="button">×</button></div><div id="modalBody" class="modal-body"></div><div id="modalFoot" class="modal-foot"></div></section></div><div id="infoOverlay" class="overlay" hidden><section class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoTitle"><div class="modal-head"><h3 id="infoTitle">Mais informações</h3><button class="close" id="closeInfo" aria-label="Fechar" type="button">×</button></div><div class="info-tabs" role="tablist" aria-label="Informações da Spazio"><button type="button" class="info-tab active" data-info="sobre">SOBRE</button><button type="button" class="info-tab" data-info="horario">HORÁRIO</button><button type="button" class="info-tab" data-info="pagamento">PAGAMENTO</button></div><div id="infoContent" class="modal-body info-content"></div></section></div>
 <script>
 'use strict';
 // Edite os sabores e valores aqui. Foram preservados os 19 produtos do HTML original.
@@ -133,7 +124,7 @@ let DELIVERY_FEE=9;
 let OPENING_HOURS={0:[['18:00','23:00']],1:[],2:[['18:00','23:00']],3:[['18:00','23:00']],4:[['18:00','23:00']],5:[['18:00','23:00']],6:[['18:00','23:00']]};
 function brazilNow(){const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=k=>parts.find(x=>x.type===k)?.value;return {day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(get('weekday')),minute:Number(get('hour'))*60+Number(get('minute'))}}
 function isOpen(){const now=brazilNow(),ranges=OPENING_HOURS[now.day];if(!Array.isArray(ranges))return null;return ranges.some(([a,b])=>{const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3));const start=mins(a),end=mins(b);return end>start?now.minute>=start&&now.minute<end:now.minute>=start||now.minute<end})}
-function updateStoreStatus(){const state=isOpen();$('#openingStatus').textContent=state===null?'🕒 Horários de funcionamento: a confirmar':state?'🟢 Estamos abertos agora':'🔴 Estamos fechados no momento';$('#promoBanner').hidden=!isPromoDay()}
+function updateStoreStatus(){const state=isOpen();const status=$('#openingStatus');status.textContent=state?'Aberto até às 23h00':'Estamos fechados';status.classList.toggle('is-open',state===true);status.classList.toggle('is-closed',state!==true);$('#promoBanner').hidden=!isPromoDay()}
 
 // A regra de meia a meia é CONFIGURÁVEL: por padrão aplica-se o maior preço.
 // Confirme com a pizzaria antes de usar pedidos meia a meia em produção.
@@ -438,6 +429,27 @@ async function loadCatalog(){
  }
 }
 
+function openInfo(tab='sobre'){
+ const overlay=$('#infoOverlay'),content=$('#infoContent');
+ overlay.hidden=false;document.body.style.overflow='hidden';
+ document.querySelectorAll('.info-tab').forEach(button=>button.classList.toggle('active',button.dataset.info===tab));
+ content.replaceChildren();
+ if(tab==='sobre'){
+  const bio=el('p','','Olá, somos a Spazio Pizza Delivery, fomos criada em 2025, pra nós é sempre um prazer servir uma pizza deliciosa com preço justo. Faça seu Pedido! 📲');
+  const contacts=el('div','info-contact');
+  const instagram=el('a','','◎ Instagram · @spaziopizzasl');instagram.href='https://instagram.com/spaziopizzasl';instagram.target='_blank';instagram.rel='noopener';
+  const whatsapp=el('a','','◉ WhatsApp · (35) 98886-6999');whatsapp.href='https://wa.me/5535988866999';whatsapp.target='_blank';whatsapp.rel='noopener';
+  contacts.append(instagram,whatsapp);content.append(bio,contacts);
+ }else if(tab==='horario'){
+  const hours=el('div','info-hours');hours.append(el('p','', 'Terça a domingo'),el('strong','','18h00 às 23h00'),el('p','store-info-muted','Segunda-feira: fechado'));content.append(hours);
+ }else{
+  const list=el('div','info-hours');['Dinheiro','Pix','Cartão de crédito','Cartão de débito'].forEach(item=>list.append(el('p','',item)));content.append(list);
+ }
+}
+$('#moreInfo').addEventListener('click',()=>openInfo('sobre'));
+$('#closeInfo').addEventListener('click',()=>{$('#infoOverlay').hidden=true;document.body.style.overflow=''});
+$('#infoOverlay').addEventListener('click',e=>{if(e.target===$('#infoOverlay')){$('#infoOverlay').hidden=true;document.body.style.overflow=''}});
+document.querySelectorAll('.info-tab').forEach(button=>button.addEventListener('click',()=>openInfo(button.dataset.info)));
 loadCatalog();setInterval(updateStoreStatus,60000);
 
 </script>
