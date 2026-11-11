@@ -235,6 +235,25 @@ html,body{background:#090909;color:var(--ink)}
   box-shadow:none!important;
   text-shadow:none!important;
 }
+
+/* Correção definitiva do efeito visual do link Mais informações */
+#moreInfo,
+#moreInfo:hover,
+#moreInfo:focus,
+#moreInfo:active{
+  text-decoration:none!important;
+  text-shadow:none!important;
+  box-shadow:none!important;
+  filter:none!important;
+  -webkit-text-stroke:0 transparent!important;
+  border:0!important;
+  border-bottom:0!important;
+  outline:none;
+  background:transparent!important;
+  background-image:none!important;
+}
+#moreInfo::before,
+#moreInfo::after{content:none!important;display:none!important}
 </style>
 </head>
 <body>
