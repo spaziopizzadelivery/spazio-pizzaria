@@ -409,7 +409,7 @@ function openProduct(product){
     }
    }
    foot.replaceChildren();
-   const back=el('button','','← Adicionais');back.type='button';back.className='secondary';back.onclick=renderExtrasStep;
+   const back=el('button','',half?'← Massa e borda':'← Adicionais');back.type='button';back.className='secondary';back.onclick=()=>half?renderCrustStep():renderExtrasStep;
    const chosen=enabled?drinks.filter(d=>(drinkSelection[d.id]||0)>0):[];
    const drinkTotal=chosen.reduce((sum,d)=>sum+d.price*drinkSelection[d.id],0);
    const add=el('button','primary','Adicionar ao carrinho · '+format((totalPrice()+extrasPrice())*qty+drinkTotal));
@@ -460,7 +460,7 @@ function openProduct(product){
  }
  function renderExtrasStep(){
   $('#modalTitle').textContent=product.name+' · Adicionais';body.replaceChildren();foot.replaceChildren();
-  body.append(el('span','field','3 de 4 · ADICIONAIS (Pizza Inteira)'));
+  body.append(el('span','field',selectedPizzaSize==='small'?'3 de 4 · ADICIONAIS':'3 de 4 · ADICIONAIS (Pizza Inteira)'));
   if(selectedPizzaSize==='small'){
    selectedExtras=[];
    body.append(el('p','','A pizza pequena não permite adicionais. Ela é preparada somente na versão tradicional.'));
@@ -505,7 +505,7 @@ function openProduct(product){
   function renderFoot(){
    foot.replaceChildren();const back=el('button','','← Voltar');back.type='button';back.style.cssText='border:1px solid #ddd4ca;background:white;border-radius:10px;padding:12px';back.addEventListener('click',renderFlavorStep);
    const controls=el('div','qty'),minus=el('button','','−'),count=el('strong','',String(qty)),plus=el('button','','+');minus.type=plus.type='button';minus.setAttribute('aria-label','Diminuir quantidade');plus.setAttribute('aria-label','Aumentar quantidade');minus.addEventListener('click',()=>{qty=Math.max(1,qty-1);renderFoot()});plus.addEventListener('click',()=>{qty=Math.min(99,qty+1);renderFoot()});controls.append(minus,count,plus);
-   const add=el('button','primary','Continuar · Adicionais →');add.type='button';add.addEventListener('click',renderExtrasStep);foot.append(back,controls,add);
+   const add=el('button','primary',half?'Continuar · Escolher bebidas →':'Continuar · Adicionais →');add.type='button';add.addEventListener('click',()=>{if(half){selectedExtras=[];renderDrinksStep()}else renderExtrasStep()});foot.append(back,controls,add);
   }
   renderFoot();
  }
