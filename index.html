@@ -521,11 +521,27 @@ function saveCustomerOnDevice(){try{localStorage.setItem(CUSTOMER_STORAGE_KEY,JS
 let customerData={name:'',whatsapp:'',mode:'delivery',street:'',number:'',district:'',reference:'',payment:'',change:''};
 function showCheckout(){if(!cart.length)return;showModal('Finalizar pedido');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();body.append(el('p','','Preencha os dados para enviarmos seu pedido completo pelo WhatsApp.'));const form=el('form','');form.id='checkoutForm';
 function field(label,key,required=false){const wrap=el('label','',label),input=el('input','entry');input.name=key;input.value=customerData[key]||'';input.required=required;input.maxLength=120;input.addEventListener('input',()=>customerData[key]=input.value);wrap.append(input);return wrap}
-form.append(field('Nome *','name',true));const whatsappField=field('WhatsApp com DDD *','whatsapp',true);const whatsappInput=whatsappField.querySelector('input');whatsappInput.type='tel';whatsappInput.inputMode='numeric';whatsappInput.maxLength=15;whatsappInput.pattern='[0-9]{10,15}';whatsappInput.placeholder='DDD + número';form.append(whatsappField);
+const whatsappField=field('WhatsApp com DDD *','whatsapp',true);const whatsappInput=whatsappField.querySelector('input');whatsappInput.type='tel';whatsappInput.inputMode='numeric';whatsappInput.maxLength=15;whatsappInput.pattern='[0-9]{10,15}';whatsappInput.placeholder='DDD + número';form.append(whatsappField);
 const recognitionNotice=el('p','note','Digite seu WhatsApp. Se você já salvou seus dados neste aparelho, preencheremos o endereço automaticamente.');
 form.append(recognitionNotice);
+form.append(field('Nome *','name',true));
 const savedProfile=readSavedCustomer();
-function restoreSavedProfile(){const number=whatsappInput.value.replace(/\D/g,'');if(!savedProfile||!number||number!==savedProfile.whatsapp){recognitionNotice.textContent='Seus dados serão preenchidos apenas se este número já tiver sido salvo neste aparelho.';return}for(const key of ['name','street','number','district','reference']){const input=form.querySelector('[name="'+key+'"]');if(input&&!input.value.trim()){input.value=savedProfile[key]||'';customerData[key]=input.value}}recognitionNotice.textContent='✓ Dados recuperados deste aparelho. Confira o endereço antes de finalizar.'}
+let restoredNumber='';
+function restoreSavedProfile(){
+ const number=whatsappInput.value.replace(/\D/g,'');
+ if(!savedProfile||!number||number!==savedProfile.whatsapp){
+  if(restoredNumber){for(const key of ['name','street','number','district','reference']){const input=form.querySelector('[name="'+key+'"]');if(input&&input.value===(savedProfile[key]||'')){input.value='';customerData[key]=''}}restoredNumber=''}
+  recognitionNotice.textContent='Seus dados serão preenchidos apenas se este número já tiver sido salvo neste aparelho.';
+  return;
+ }
+ if(restoredNumber===number)return;
+ for(const key of ['name','street','number','district','reference']){
+  const input=form.querySelector('[name="'+key+'"]');
+  if(input){input.value=savedProfile[key]||'';customerData[key]=input.value}
+ }
+ restoredNumber=number;
+ recognitionNotice.textContent='✓ Nome, rua, número, bairro e referência recuperados. Confira antes de finalizar.';
+}
 whatsappInput.addEventListener('input',restoreSavedProfile);
 form.append(el('span','field','Como deseja receber?'));const modes=el('div','mode');modes.append(labelledRadio('deliveryMode','delivery','Entrega',customerData.mode==='delivery'),labelledRadio('deliveryMode','pickup','Retirada',customerData.mode==='pickup'));form.append(modes);
 const address=el('div','checkout-grid');address.append(field('Rua / Avenida *','street',true),field('Número *','number',true),field('Bairro *','district',true),field('Complemento / referência','reference'));form.append(address);
