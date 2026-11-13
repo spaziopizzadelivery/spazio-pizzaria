@@ -297,12 +297,12 @@ const ORDER_DRAFT_KEY='spazio_order_draft_v1';
 function readOrderDraft(){try{const value=JSON.parse(localStorage.getItem(ORDER_DRAFT_KEY)||'null');return value&&typeof value==='object'?value:null}catch{return null}}
 let savedOrderDraft=readOrderDraft();
 let category='Pizzas',cart=Array.isArray(savedOrderDraft?.cart)?savedOrderDraft.cart:[],selectedProduct=null,qty=1,lastFocus=null;
-let activePizzaDraft=null;
+let activePizzaDraft=savedOrderDraft?.pizza&&typeof savedOrderDraft.pizza==='object'?savedOrderDraft.pizza:null;
 function persistOrderDraft(){
  try{localStorage.setItem(ORDER_DRAFT_KEY,JSON.stringify({cart, pizza:activePizzaDraft,updatedAt:Date.now()}))}
  catch(err){console.warn('Não foi possível salvar o pedido em andamento',err)}
 }
-function clearPizzaDraft(){activePizzaDraft=null;persistOrderDraft()}
+function clearPizzaDraft(){activePizzaDraft=null;document.querySelector('#resumeDraftButton')?.remove();persistOrderDraft()}
 
 let selectedPizzaSize=null;
 function pizzaPrice(p){return Number((Number(p.price)*(selectedPizzaSize==='small'?0.6:1)).toFixed(2))}
@@ -348,6 +348,13 @@ function renderCatalog(){updateStoreStatus();
 }
 function openPizzaPicker(size, groupName=category){
  selectedPizzaSize=size;category=groupName;
+ // Oferece retomar a pizza em montagem ao voltar ao cardápio.
+ if(activePizzaDraft&&activePizzaDraft.size===size){
+  const pending=PRODUCTS.find(p=>String(p.id)===String(activePizzaDraft.productId));
+  if(pending&&confirm('Você tem uma pizza em andamento. Deseja continuar de onde parou?')){
+   openProduct(pending);return;
+  }
+ }
  const pizzas=PRODUCTS.filter(p=>groupName==='Pizzas Doces'?p.category==='Pizzas Doces':p.category!=='Bebidas'&&p.category!=='Pizzas Doces');
  showModal(groupName==='Pizzas Doces'?(size==='small'?'Escolha sua pizza doce · Pequena':'Escolha sua pizza doce · Grande'):(size==='small'?'Escolha sua pizza · Pequena':'Escolha sua pizza · Grande'));
  const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();
@@ -681,6 +688,18 @@ async function loadCatalog(){
   try{applySettings(settingsResult.value)}catch(err){console.error('Falha nas configurações:',err)}
  }else console.error('Falha ao carregar configurações:',settingsResult.reason);
  renderCatalog();updateCart();
+ if(activePizzaDraft){
+  const pending=PRODUCTS.find(p=>String(p.id)===String(activePizzaDraft.productId));
+  if(pending&&!document.querySelector('#resumeDraftButton')){
+   const resumeButton=el('button','primary','🍕 Continuar pizza em andamento');
+   resumeButton.id='resumeDraftButton';resumeButton.type='button';
+   resumeButton.style.cssText='display:block;margin:12px auto;padding:12px 20px';
+   resumeButton.onclick=()=>{selectedPizzaSize=activePizzaDraft.size;openProduct(pending)};
+   const basket=$('#basketBar');
+   if(basket?.parentNode)basket.parentNode.insertBefore(resumeButton,basket);
+   else document.querySelector('main')?.prepend(resumeButton);
+  }
+ }
  if(productsResult.status==='fulfilled'){
   if(!PRODUCTS.length){status.textContent='Nenhum produto ativo encontrado no cardápio.';return}
   if(bordersResult.status==='rejected'||settingsResult.status==='rejected'){
