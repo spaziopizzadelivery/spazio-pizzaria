@@ -186,15 +186,21 @@ function playOrderSound(){
  if(!soundEnabled||!orderAudioContext)return;
  try{
   if(orderAudioContext.state==='suspended')orderAudioContext.resume().catch(console.warn);
-  const start=orderAudioContext.currentTime+0.04;
-  for(let i=0;i<3;i++){
-   const osc=orderAudioContext.createOscillator(),gain=orderAudioContext.createGain();
-   osc.type='sine';osc.frequency.setValueAtTime(i===1?880:660,start+i*0.34);
-   gain.gain.setValueAtTime(0.0001,start+i*0.34);
-   gain.gain.exponentialRampToValueAtTime(0.24,start+i*0.34+0.02);
-   gain.gain.exponentialRampToValueAtTime(0.0001,start+i*0.34+0.25);
-   osc.connect(gain);gain.connect(orderAudioContext.destination);
-   osc.start(start+i*0.34);osc.stop(start+i*0.34+0.26);
+  const ctx=orderAudioContext,start=ctx.currentTime+0.04;
+  // Alerta marcante em dois blocos ascendentes, com harmônicos e volume controlado.
+  const notes=[{t:0,f:587.33,d:.17},{t:.19,f:783.99,d:.17},{t:.38,f:987.77,d:.30},
+               {t:.84,f:587.33,d:.17},{t:1.03,f:783.99,d:.17},{t:1.22,f:1174.66,d:.40}];
+  for(const note of notes){
+   for(const [wave,level,detune] of [['triangle',.29,0],['sine',.10,12]]){
+    const osc=ctx.createOscillator(),gain=ctx.createGain(),at=start+note.t;
+    osc.type=wave;osc.frequency.setValueAtTime(note.f,at);osc.detune.value=detune;
+    gain.gain.setValueAtTime(.0001,at);
+    gain.gain.exponentialRampToValueAtTime(level,at+.018);
+    gain.gain.setValueAtTime(level*.75,at+Math.min(.09,note.d*.55));
+    gain.gain.exponentialRampToValueAtTime(.0001,at+note.d);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start(at);osc.stop(at+note.d+.015);
+   }
   }
  }catch(err){console.warn('Som indisponível:',err)}
 }
