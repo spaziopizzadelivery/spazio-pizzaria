@@ -437,7 +437,7 @@ function openProduct(product){
   if(half){
    body.append(el('label','field','Escolha o segundo sabor'));
    const list=el('div','pizza-flavor-list');
-   for(const p of PRODUCTS.filter(x=>x.id!==product.id&&(x.category==='Pizzas Doces')===(product.category==='Pizzas Doces')&&x.category!=='Bebidas')){
+   for(const p of PRODUCTS.filter(x=>x.id!==product.id&&x.category!=='Bebidas')){
     const row=el('div','pizza-flavor-pick'+(second?.id===p.id?' selected':''));
     const info=el('div','pizza-flavor-info');
     info.append(el('strong','',p.name),el('span','',p.description||''));
