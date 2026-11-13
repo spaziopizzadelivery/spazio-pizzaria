@@ -384,7 +384,17 @@ function openBeverage(product){
  qty=1;showModal(product.name);const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();body.append(el('p','',product.description),el('p','', 'Preço unitário: '+format(product.price)));
  function renderFoot(){foot.replaceChildren();const controls=el('div','qty'),minus=el('button','','−'),count=el('strong','',String(qty)),plus=el('button','','+');minus.type=plus.type='button';minus.setAttribute('aria-label','Diminuir quantidade');plus.setAttribute('aria-label','Aumentar quantidade');minus.onclick=()=>{qty=Math.max(1,qty-1);renderFoot()};plus.onclick=()=>{qty=Math.min(99,qty+1);renderFoot()};controls.append(minus,count,plus);const add=el('button','primary','Adicionar · '+format(product.price*qty));add.type='button';add.onclick=()=>{cart.push({key:Date.now()+'-'+Math.random(),name:product.name,unit:product.price,qty,notes:'',cream:'',half:false,crust:'',crustPrice:0});updateCart();closeModal()};foot.append(controls,add)}renderFoot();
 }
-function openProduct(product){
+function openProduct(product,editItem=null){
+ if(editItem){
+  const parts=editItem.name.replace(/ \((25|35)cm\)$/,'').split(' / ');
+  const secondProduct=parts.length>1?PRODUCTS.find(p=>p.name===parts[1]):null;
+  activePizzaDraft={productId:product.id,size:selectedPizzaSize,half:!!editItem.half,
+   secondId:secondProduct?.id||null,cream:editItem.cream||'',
+   crustId:editItem.crustId||'traditional',
+   notes:(editItem.notes||'').split(' | Adicionais:')[0],
+   extras:editItem.extras||[],drinks:{},qty:editItem.qty||1,
+   step:'flavor',editKey:editItem.key};
+ }
  const resume=activePizzaDraft&&String(activePizzaDraft.productId)===String(product.id)&&activePizzaDraft.size===selectedPizzaSize;
  selectedProduct=product;qty=resume?activePizzaDraft.qty:1;showModal(product.name);
  const body=$('#modalBody'),foot=$('#modalFoot');
@@ -399,8 +409,9 @@ function openProduct(product){
  function basePrice(){return half&&second?(HALF_PRICE_RULE==='highest'?Math.max(pizzaPrice(product),pizzaPrice(second)):pizzaPrice(product)):pizzaPrice(product)}
  function totalPrice(){return basePrice()+(isPromoDay()?0:crust.price)}
  let drinkSelection=resume?activePizzaDraft.drinks||{}:{};
+ const editKey=resume?activePizzaDraft.editKey:null;
  function savePizzaDraft(step){
-  activePizzaDraft={productId:product.id,size:selectedPizzaSize,half,secondId:second?.id||null,cream,crustId:crust.id,notes,extras:selectedExtras,drinks:drinkSelection,qty,step};
+  activePizzaDraft={productId:product.id,size:selectedPizzaSize,half,secondId:second?.id||null,cream,crustId:crust.id,notes,extras:selectedExtras,drinks:drinkSelection,qty,step,editKey};
   persistOrderDraft();
  }
  // Salva alterações dentro da etapa, inclusive se o cliente fechar a janela.
@@ -442,11 +453,15 @@ function openProduct(product){
    const back=el('button','',half?'← Massa e borda':'← Adicionais');back.type='button';back.className='secondary';back.onclick=()=>half?renderCrustStep():renderExtrasStep;
    const chosen=enabled?drinks.filter(d=>(drinkSelection[d.id]||0)>0):[];
    const drinkTotal=chosen.reduce((sum,d)=>sum+d.price*drinkSelection[d.id],0);
-   const add=el('button','primary','Adicionar ao carrinho · '+format((totalPrice()+extrasPrice())*qty+drinkTotal));
+   const add=el('button','primary',(editKey?'Salvar alterações · ':'Adicionar ao carrinho · ')+format((totalPrice()+extrasPrice())*qty+drinkTotal));
    add.type='button';add.onclick=()=>{
     const extrasText=selectedExtras.length?'Adicionais: '+selectedExtras.map(x=>x.name).join(', '):'';
-    const item={key:Date.now()+'-'+Math.random(),name:(half&&second?product.name+' / '+second.name:product.name)+' ('+(selectedPizzaSize==='small'?'25cm':'35cm')+')',unit:totalPrice()+extrasPrice(),basePrice:basePrice(),extras:selectedExtras.map(x=>({...x})),extrasPrice:extrasPrice(),qty,notes:[notes.trim(),extrasText].filter(Boolean).join(' | '),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
-    cart.push(item);
+    const item={key:Date.now()+'-'+Math.random(),productId:product.id,name:(half&&second?product.name+' / '+second.name:product.name)+' ('+(selectedPizzaSize==='small'?'25cm':'35cm')+')',unit:totalPrice()+extrasPrice(),basePrice:basePrice(),extras:selectedExtras.map(x=>({...x})),extrasPrice:extrasPrice(),qty,notes:[notes.trim(),extrasText].filter(Boolean).join(' | '),cream,half,crust:crust.label,crustId:crust.id,crustPrice:crust.price};
+    if(editKey){
+     const index=cart.findIndex(x=>x.key===editKey);
+     if(index<0){showCart();return}
+     item.key=editKey;cart[index]=item;
+    }else cart.push(item);
     for(const drink of chosen)cart.push({key:Date.now()+'-'+Math.random(),name:drink.name,unit:drink.price,qty:drinkSelection[drink.id],notes:'',cream:'',half:false,crust:'',crustPrice:0});
     updateCart();clearPizzaDraft();closeModal();
    };
@@ -548,7 +563,30 @@ function openProduct(product){
  else renderFlavorStep();
 }
 function updateCart(){persistOrderDraft();const n=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+x.qty*itemUnit(x),0);$('#headerCount').textContent=`(${n})`;$('#basketBar').hidden=n===0;$('#basketLabel').textContent=n===1?'1 item':n+' itens';$('#basketValue').textContent=format(total)}
-function showCart(){showModal('Seu carrinho');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();if(!cart.length){body.append(el('p','','Seu carrinho está vazio. Escolha uma pizza para começar!'));const back=el('button','primary','Ver cardápio');back.onclick=closeModal;foot.append(back);return}cart.forEach(item=>{const row=el('div','cart-item');row.append(el('strong','',item.name));const details=[item.half?'Meia a meia':null,item.cream?'Opção: '+item.cream:null,item.crust?'Massa/borda: '+item.crust+(item.crustId&&item.crustId!=='traditional'?(isPromoDay()?' (CORTESIA DE TERÇA)':' (+ '+format(effectiveCrustPrice(item))+')'):''):null,item.extras?.length?'Adicionais: '+item.extras.map(x=>x.name+' (+ '+format(x.price)+')').join(', '):null,item.notes?'Obs.: '+item.notes:null].filter(Boolean);if(details.length)row.append(el('p','',details.join(' • ')));const line=el('div','cart-row'),amount=el('strong','',format(item.qty*itemUnit(item))),controls=el('div','qty'),minus=el('button','','−'),count=el('span','',String(item.qty)),plus=el('button','','+');minus.setAttribute('aria-label','Reduzir '+item.name);plus.setAttribute('aria-label','Aumentar '+item.name);minus.addEventListener('click',()=>{item.qty--;if(item.qty<=0)cart=cart.filter(x=>x!==item);updateCart();showCart()});plus.addEventListener('click',()=>{item.qty=Math.min(item.qty+1,99);updateCart();showCart()});controls.append(minus,count,plus);line.append(controls,amount);row.append(line);body.append(row)});
+function editCartItem(item){
+ const name=item.name.replace(/ \((25|35)cm\)$/,'').split(' / ')[0];
+ const product=PRODUCTS.find(p=>String(p.id)===String(item.productId))||PRODUCTS.find(p=>p.name===name);
+ if(!product){alert('Este produto não está mais disponível no cardápio para edição.');return}
+ selectedPizzaSize=item.name.includes('(25cm)')?'small':'large';
+ activePizzaDraft=null;
+ openProduct(product,item);
+}
+function showCart(){showModal('Seu carrinho');const body=$('#modalBody'),foot=$('#modalFoot');body.replaceChildren();foot.replaceChildren();if(!cart.length){body.append(el('p','','Seu carrinho está vazio. Escolha uma pizza para começar!'));const back=el('button','primary','Ver cardápio');back.onclick=closeModal;foot.append(back);return}cart.forEach(item=>{const row=el('div','cart-item');row.append(el('strong','',item.name));const details=[item.half?'Meia a meia':null,item.cream?'Opção: '+item.cream:null,item.crust?'Massa/borda: '+item.crust+(item.crustId&&item.crustId!=='traditional'?(isPromoDay()?' (CORTESIA DE TERÇA)':' (+ '+format(effectiveCrustPrice(item))+')'):''):null,item.extras?.length?'Adicionais: '+item.extras.map(x=>x.name+' (+ '+format(x.price)+')').join(', '):null,item.notes?'Obs.: '+item.notes:null].filter(Boolean);if(details.length)row.append(el('p','',details.join(' • ')));const line=el('div','cart-row'),amount=el('strong','',format(item.qty*itemUnit(item))),controls=el('div','qty'),minus=el('button','','−'),count=el('span','',String(item.qty)),plus=el('button','','+');minus.setAttribute('aria-label','Reduzir '+item.name);plus.setAttribute('aria-label','Aumentar '+item.name);minus.addEventListener('click',()=>{item.qty--;if(item.qty<=0)cart=cart.filter(x=>x!==item);updateCart();showCart()});plus.addEventListener('click',()=>{item.qty=Math.min(item.qty+1,99);updateCart();showCart()});controls.append(minus,count,plus);line.append(controls,amount);row.append(line);
+ const edit=el('button','secondary','✏️ Editar item');edit.type='button';
+ edit.style.cssText='margin-top:9px;padding:9px 13px';
+ edit.onclick=()=>{if(item.basePrice!==undefined)editCartItem(item);else{
+  const product=PRODUCTS.find(p=>p.name===item.name);
+  if(!product){alert('Bebida indisponível para edição.');return}
+  showModal('Editar bebida');body.replaceChildren();foot.replaceChildren();
+  const title=el('strong','',item.name),controls=el('div','qty'),minus=el('button','','−'),count=el('strong','',String(item.qty)),plus=el('button','','+');
+  minus.type=plus.type='button';
+  minus.onclick=()=>{item.qty=Math.max(1,item.qty-1);count.textContent=String(item.qty)};
+  plus.onclick=()=>{item.qty=Math.min(99,item.qty+1);count.textContent=String(item.qty)};
+  controls.append(minus,count,plus);body.append(title,controls);
+  const cancel=el('button','secondary','Voltar');cancel.onclick=showCart;
+  const save=el('button','primary','Salvar alterações');save.onclick=()=>{updateCart();showCart()};
+  foot.append(cancel,save);
+ }};row.append(edit);body.append(row)});
 const total=cart.reduce((s,x)=>s+x.qty*itemUnit(x),0),tot=el('div','cart-total');tot.append(el('span','','Subtotal'),el('span','',format(total)));body.append(tot,el('p','note','Taxa fixa de entrega: '+format(DELIVERY_FEE)+'. Para retirada, não há taxa. O total será exibido na finalização.'));const order=el('button','primary','Finalizar pelo WhatsApp →');order.addEventListener('click',()=>showCheckout());foot.append(order)}
 // Dados opcionais guardados apenas neste navegador. Nenhuma consulta pública por telefone.
 const CUSTOMER_STORAGE_KEY='spazio_customer_profile_v1';
