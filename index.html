@@ -403,6 +403,15 @@ function openProduct(product){
   activePizzaDraft={productId:product.id,size:selectedPizzaSize,half,secondId:second?.id||null,cream,crustId:crust.id,notes,extras:selectedExtras,drinks:drinkSelection,qty,step};
   persistOrderDraft();
  }
+ // Salva alterações dentro da etapa, inclusive se o cliente fechar a janela.
+ const captureDraft=()=>queueMicrotask(()=>{
+  if($('#overlay').hidden||selectedProduct!==product||!activePizzaDraft)return;
+  const step=activePizzaDraft.step;
+  savePizzaDraft(step);
+ });
+ body.addEventListener('input',captureDraft);
+ body.addEventListener('change',captureDraft);
+ body.addEventListener('click',captureDraft);
  function renderDrinksStep(){
   savePizzaDraft('drinks');
   $('#modalTitle').textContent=product.name+' · Bebidas';body.replaceChildren();foot.replaceChildren();
