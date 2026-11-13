@@ -385,11 +385,11 @@ function openProduct(product){
  let drinkSelection={};
  function renderDrinksStep(){
   $('#modalTitle').textContent=product.name+' · Bebidas';body.replaceChildren();foot.replaceChildren();
-  body.append(el('span','field','4 de 4 · Escolha suas bebidas'),el('p','','Selecione uma ou mais bebidas, ou continue sem bebidas.'));
+  body.append(el('span','field','3 de 3 · Escolha suas bebidas'),el('p','','Selecione uma ou mais bebidas, ou continue sem bebidas.'));
   const drinks=PRODUCTS.filter(p=>p.category==='Bebidas');
   const none=labelledRadio('drinkChoice','none','Sem bebidas',Object.values(drinkSelection).every(v=>v===0));
   const withDrinks=labelledRadio('drinkChoice','yes','Escolher bebidas',Object.values(drinkSelection).some(v=>v>0));
-  body.append(none,withDrinks);
+  body.append(withDrinks,none);
   const list=el('div','');body.append(list);
   function draw(){
    list.replaceChildren();
